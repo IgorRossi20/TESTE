@@ -1,0 +1,46 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f4f8;
+}
+.font-bangers {
+    font-family: 'Bangers', cursive;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 50;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+}
+.crown-gold { color: #FFD700; }
+.crown-silver { color: #C0C0C0; }
+.crown-bronze { color: #CD7F32; }
+.poop-icon { color: #795548; }
+.comment-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+.comment-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.comment-scrollbar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+.comment-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+} 

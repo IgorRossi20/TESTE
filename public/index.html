@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking da Vara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bangers&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-blue-50">
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100]">
+        <div class="text-center text-white">
+            <i class="fas fa-fish fa-4x fa-beat-fade"></i>
+            <p class="text-2xl font-bangers mt-4 tracking-wider">Carregando o Anzol...</p>
+        </div>
+    </div>
+    <!-- Main Content -->
+    <div id="main-content" class="invisible">
+        <header class="bg-blue-800 shadow-lg p-4">
+            <div class="container mx-auto flex justify-center items-center">
+                <h1 class="text-4xl font-bangers text-white tracking-widest">Ranking da Vara</h1>
+            </div>
+        </header>
+        <main class="container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit">
+                <h2 class="text-3xl font-bangers text-gray-800 mb-4 tracking-wider"><i class="fas fa-trophy text-yellow-500"></i> Liga da Pesca</h2>
+                <div id="ranking-list" class="space-y-3"></div>
+            </div>
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white p-4 rounded-xl shadow-lg text-center">
+                    <button id="add-catch-btn" class="w-full md:w-auto bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 text-lg">
+                        <i class="fas fa-plus-circle mr-2"></i> Registrar Nova Captura
+                    </button>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bangers text-gray-800 mb-4 tracking-wider"><i class="fas fa-newspaper text-blue-500"></i> Mural da Zoeira</h2>
+                    <div id="feed-container" class="space-y-6"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Nickname Modal -->
+    <div id="nickname-modal" class="modal">
+        <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-md">
+             <h3 class="text-2xl font-bold text-center text-gray-700 mb-4">Identifique-se, Pescador!</h3>
+             <p class="text-center text-gray-500 mb-6">Para entrar no ranking, diga-nos seu nome de guerra.</p>
+             <input type="text" id="nickname-input" placeholder="Seu Nome de Guerra (Apelido)" class="w-full p-3 mb-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors">
+             <input type="text" id="photo-url-input" placeholder="URL da sua foto de perfil (Opcional)" class="w-full p-3 mb-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors">
+             <button id="save-nickname-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Continuar</button>
+             <p id="nickname-error" class="text-red-500 text-sm mt-4 text-center"></p>
+        </div>
+    </div>
+    <!-- Add Catch Modal -->
+    <div id="add-catch-modal" class="modal">
+        <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-lg">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bangers text-blue-800 tracking-wider">Registrar Peixão</h2>
+                <button id="close-catch-modal" class="text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+            </div>
+            <form id="catch-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2">Espécie do Bicho:</label>
+                    <input type="text" name="species" placeholder="Ex: Tambaqui, Pirarara, Tilápia..." class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-bold mb-2">Peso (em kg):</label>
+                    <input type="number" step="0.01" name="weight" placeholder="Ex: 5.75" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-bold mb-2">Foto com o Troféu:</label>
+                    <label for="fish-photo-input" class="w-full cursor-pointer bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg inline-block text-center hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-camera"></i> Tirar / Escolher Foto
+                    </label>
+                    <input type="file" id="fish-photo-input" name="photo" accept="image/*" class="hidden" required>
+                    <p id="file-name" class="text-sm text-gray-500 mt-2"></p>
+                </div>
+                <button type="submit" id="submit-catch-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 text-lg disabled:bg-gray-400">
+                    Salvar Captura
+                </button>
+                 <p id="catch-error" class="text-red-500 text-sm mt-4 text-center"></p>
+            </form>
+        </div>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html> 
