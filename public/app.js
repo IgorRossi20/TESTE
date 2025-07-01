@@ -1,4 +1,4 @@
-import { firebaseConfig, appId } from '../firebaseConfig.js';
+1import { firebaseConfig, appId } from '../firebaseConfig.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -171,6 +171,11 @@ function calculatePoints(catchData) {
     };
     const factor = speciesFactors[catchData.species] || 1;
     return catchData.weight * factor;
+}
+
+function getUserBadges(userStats) {
+    // Retorna um array vazio se não quiser mostrar insígnias por enquanto
+    return [];
 }
 
 function updateRanking(catches) {
