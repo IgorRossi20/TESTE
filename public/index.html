@@ -28,11 +28,14 @@
             <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-3xl font-bangers text-gray-800 tracking-wider"><i class="fas fa-trophy text-yellow-500"></i> Liga da Pesca</h2>
-                    <select id="ranking-mode" class="border-2 border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
-                        <option value="weight">Por Quilos</option>
-                        <option value="count">Por Quantidade</option>
-                        <option value="points">Por Pontos</option>
-                    </select>
+                    <div class="flex gap-2 items-center">
+                        <select id="ranking-mode" class="border-2 border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                            <option value="weight">Por Quilos</option>
+                            <option value="count">Por Quantidade</option>
+                            <option value="points">Por Pontos</option>
+                        </select>
+                        <button id="open-points-info" class="ml-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-lg border border-blue-300 text-xs font-bold hover:bg-blue-200 transition">Como funciona o sistema de pontos?</button>
+                    </div>
                 </div>
                 <div id="ranking-list" class="space-y-3"></div>
             </div>
@@ -90,6 +93,62 @@
                  <p id="catch-error" class="text-red-500 text-sm mt-4 text-center"></p>
             </form>
         </div>
+    </div>
+    <!-- Modal de Perfil do Pescador -->
+    <div id="profile-modal" class="modal" style="display:none;">
+      <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-lg relative">
+        <button id="close-profile-modal" class="absolute top-2 right-4 text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+        <div id="profile-info"></div>
+        <h3 class="text-xl font-bold mt-6 mb-2">Insígnias</h3>
+        <div id="profile-badges" class="flex flex-wrap gap-3"></div>
+      </div>
+    </div>
+    <!-- Modal de explicação do sistema de pontos -->
+    <div id="points-info-modal" class="modal" style="display:none;">
+      <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-lg relative">
+        <button id="close-points-info-modal" class="absolute top-2 right-4 text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+        <h2 class="text-2xl font-bold mb-4 text-blue-800">Como funciona o sistema de pontos?</h2>
+        <div class="text-gray-700 text-sm space-y-4">
+          <p>
+            <b>🎯 Objetivo:</b> Ganhe pontos registrando pescarias e conquiste seu lugar no topo do ranking!
+          </p>
+          <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mb-2">
+            <b>🧮 Fórmula básica:</b><br>
+            <span class="font-mono text-blue-900">Pontos = (Peso do Peixe × Fator da Espécie) + Bônus</span>
+          </div>
+          <ul class="list-disc ml-6">
+            <li><b>🐟 Fator por espécie:</b></li>
+            <ul class="ml-4">
+              <li>Tilápia: <span class="font-bold text-blue-700">0,5x</span></li>
+              <li>Tambaqui: <span class="font-bold text-blue-700">3x</span></li>
+              <li>Pirarara: <span class="font-bold text-blue-700">3x</span></li>
+              <li>Dourado: <span class="font-bold text-blue-700">2,5x</span></li>
+              <li>Traíra: <span class="font-bold text-blue-700">1,5x</span></li>
+            </ul>
+            <li><b>⚡ Combo de pesca:</b> +10% de pontos se registrar 3 pescarias em 24h.</li>
+            <li><b>🌟 Multiplicador de evento:</b> Pontos dobrados durante eventos especiais.</li>
+            <li><b>⏳ Perda de pontos:</b> -100 pontos a cada 15 dias sem registrar pescarias.</li>
+          </ul>
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-2">
+            <b>📈 Exemplo prático:</b><br>
+            Se você pescar uma <b>Pirarara</b> de <b>8kg</b> durante um evento:<br>
+            <span class="font-mono text-green-700">Pontos = (8 × 3) × 2 = 48</span>
+          </div>
+          <p><b>🏆 Faixas do Ranking:</b></p>
+          <ul class="list-disc ml-6">
+            <li>0 - 99: <span class="font-bold text-pink-600">Pesca Fofo 🧸</span></li>
+            <li>100 - 499: Pescador Iniciante</li>
+            <li>500 - 999: Pescador Constante</li>
+            <li>1000 - 1999: Pescador Profissa</li>
+            <li>2000 - 3999: Rei do Rio</li>
+            <li>4000 - 6999: Caçador de Monstros</li>
+            <li>7000+: <span class="font-bold text-yellow-600">Pescador FODA 🐟</span></li>
+          </ul>
+          <div class="bg-green-50 border-l-4 border-green-400 p-3 rounded mt-2">
+            <b>💡 Dica:</b> Aproveite os combos e eventos para turbinar sua pontuação e conquistar insígnias exclusivas!
+          </div>
+        </div>
+      </div>
     </div>
     <script type="module" src="firebaseConfig.js"></script>
     <script type="module" src="app.js"></script>

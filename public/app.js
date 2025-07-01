@@ -161,7 +161,7 @@ function updateUI(catches) {
     updateFeed(catches);
 }
 
-function calculatePoints(catchData) {
+function calculatePoints(catchData, userStats) {
     // Fatores por espécie
     const speciesFactors = {
         'Tilápia': 0.5,
@@ -171,17 +171,39 @@ function calculatePoints(catchData) {
         'Traíra': 1.5
     };
     const factor = speciesFactors[catchData.species] || 1;
-    // Bônus pode ser expandido depois
-    const bonus = 0;
-    return (catchData.weight * factor) + bonus;
+    let basePoints = (catchData.weight * factor);
+    // Bônus de evento
+    if (userStats && userStats.participatedEvent) basePoints *= 2;
+    return basePoints;
 }
 
-function getUserBadges(userStats) {
-    // Esqueleto: retorna insígnias fixas para teste
-    return [
-        { name: 'Pescador Iniciante', rarity: 'Comum', icon: '🎣' },
-        { name: 'Gigante do Lago', rarity: 'Rara', icon: '🐟' }
-    ];
+function getComboBonus(catches) {
+    // +10% se registrar 3 pescarias em 24h
+    if (catches.length < 3) return 1;
+    // Ordena por data
+    const sorted = catches.map(c => new Date(c.timestamp)).sort((a, b) => a - b);
+    for (let i = 0; i < sorted.length - 2; i++) {
+        const t1 = sorted[i];
+        const t2 = sorted[i + 2];
+        if ((t2 - t1) / (1000 * 60 * 60) <= 24) return 1.1;
+    }
+    return 1;
+}
+
+function getInactivityPenalty(catches) {
+    // -100 pontos se ficar 15 dias sem registrar pescarias
+    if (catches.length === 0) return 0;
+    const sorted = catches.map(c => new Date(c.timestamp)).sort((a, b) => a - b);
+    let penalty = 0;
+    for (let i = 1; i < sorted.length; i++) {
+        const diffDays = (sorted[i] - sorted[i - 1]) / (1000 * 60 * 60 * 24);
+        if (diffDays >= 15) penalty -= 100;
+    }
+    // Também penaliza se o último registro for há mais de 15 dias
+    const now = new Date();
+    const last = sorted[sorted.length - 1];
+    if ((now - last) / (1000 * 60 * 60 * 24) >= 15) penalty -= 100;
+    return penalty;
 }
 
 function updateRanking(catches) {
@@ -190,17 +212,35 @@ function updateRanking(catches) {
         if (!statsMap[c.userId]) {
             statsMap[c.userId] = {
                 uid: c.userId, nickname: c.userNickname, photoURL: c.userPhotoURL,
-                totalWeight: 0, catchCount: 0, totalPoints: 0, catches: []
+                totalWeight: 0, catchCount: 0, totalPoints: 0, catches: [],
+                top1Streak: 0, lastStreak: 0, wasLastOnce: false, participatedEvent: false, rankTitle: ''
             };
         }
         statsMap[c.userId].totalWeight += c.weight;
         statsMap[c.userId].catchCount++;
-        statsMap[c.userId].totalPoints += calculatePoints(c);
         statsMap[c.userId].catches.push(c);
+    });
+    // Cálculo de pontos com bônus e penalidades
+    let rankedUsers = Object.values(statsMap);
+    rankedUsers.forEach(user => {
+        let points = 0;
+        user.catches.forEach(c => {
+            points += calculatePoints(c, user);
+        });
+        points *= getComboBonus(user.catches);
+        points += getInactivityPenalty(user.catches);
+        user.totalPoints = points;
+        // Determinar títulos de ranking
+        if (user.totalPoints >= 7000) user.rankTitle = 'Pescador FODA 🐟';
+        else if (user.totalPoints >= 4000) user.rankTitle = 'Caçador de Monstros';
+        else if (user.totalPoints >= 2000) user.rankTitle = 'Rei do Rio';
+        else if (user.totalPoints >= 1000) user.rankTitle = 'Pescador Profissa';
+        else if (user.totalPoints >= 500) user.rankTitle = 'Pescador Constante';
+        else if (user.totalPoints >= 100) user.rankTitle = 'Pescador Iniciante';
+        else user.rankTitle = 'Pesca Fofo 🧸';
     });
     // Seleção de modo de ranking
     const mode = document.getElementById('ranking-mode')?.value || 'weight';
-    let rankedUsers = Object.values(statsMap);
     if (mode === 'weight') rankedUsers.sort((a, b) => b.totalWeight - a.totalWeight);
     else if (mode === 'count') rankedUsers.sort((a, b) => b.catchCount - a.catchCount);
     else if (mode === 'points') rankedUsers.sort((a, b) => b.totalPoints - a.totalPoints);
@@ -212,10 +252,9 @@ function updateRanking(catches) {
     rankedUsers.forEach((user, index) => {
         const rank = index + 1;
         let rankIcon = `<span class="font-bold text-gray-500 w-8 text-center">${rank}.</span>`;
-        let specialTitle = '';
-        // Exemplo de exibição de insígnias
+        // Insígnias reais do usuário
         const badges = getUserBadges(user);
-        const badgesHTML = badges.map(b => `<span title="${b.name} (${b.rarity})" class="text-xl mx-1">${b.icon}</span>`).join('');
+        const badgesHTML = badges.map(b => `<span title="${b.name} (${b.rarity}) - ${b.desc}\" class="text-xl mx-1">${b.icon}</span>`).join('');
         const userElement = document.createElement('div');
         userElement.className = `p-3 rounded-lg flex items-center space-x-3 transition-all ${rank === 1 ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-100'}`;
         userElement.innerHTML = `
@@ -227,10 +266,13 @@ function updateRanking(catches) {
                     ${mode === 'weight' ? user.totalWeight.toFixed(2) + ' kg' : mode === 'count' ? user.catchCount + ' peixes' : user.totalPoints.toFixed(0) + ' pontos'}
                 </p>
                 <div class="mt-1">${badgesHTML}</div>
-                ${specialTitle}
+                <div class="text-xs font-bold text-blue-700 mt-1">${user.rankTitle}</div>
             </div>`;
         rankingList.appendChild(userElement);
     });
+    // Salvar rankedUsers globalmente para uso no modal
+    window._lastRankedUsers = rankedUsers;
+    addProfileModalEvents();
 }
 
 function updateFeed(catches) {
@@ -353,4 +395,61 @@ document.getElementById('ranking-mode')?.addEventListener('change', () => {
 });
 
 // --- Start the app ---
-window.onload = startApp; 
+window.onload = startApp;
+
+// Função para exibir o modal de perfil
+function showProfileModal(user) {
+  const modal = document.getElementById('profile-modal');
+  const infoDiv = document.getElementById('profile-info');
+  const badgesDiv = document.getElementById('profile-badges');
+  infoDiv.innerHTML = `
+    <div class="flex items-center gap-4 mb-4">
+      <img src="${user.photoURL}" alt="${user.nickname}" class="w-16 h-16 rounded-full object-cover border-2 border-gray-300">
+      <div>
+        <p class="font-bold text-2xl text-gray-800 mb-1">${user.nickname}</p>
+        <p class="text-sm text-blue-700 font-bold">${user.rankTitle}</p>
+        <p class="text-sm text-gray-600">${user.totalWeight.toFixed(2)} kg | ${user.catchCount} peixes | ${user.totalPoints.toFixed(0)} pontos</p>
+      </div>
+    </div>
+  `;
+  // Insígnias conquistadas
+  const conquered = getUserBadges(user).map(b => b.name);
+  badgesDiv.innerHTML = BADGES.map(b => `
+    <div class="flex flex-col items-center justify-center w-20">
+      <span class="text-3xl ${conquered.includes(b.name) ? '' : 'opacity-30'}" title="${b.name} (${b.rarity}) - ${b.desc}">${b.icon}</span>
+      <span class="text-xs text-center mt-1 ${conquered.includes(b.name) ? 'text-gray-800' : 'text-gray-400'}">${b.name}</span>
+      <span class="text-[10px] ${conquered.includes(b.name) ? 'text-blue-600' : 'text-gray-300'}">${b.rarity}</span>
+    </div>
+  `).join('');
+  modal.style.display = 'flex';
+}
+// Fechar modal
+const closeProfileModalBtn = document.getElementById('close-profile-modal');
+if (closeProfileModalBtn) {
+  closeProfileModalBtn.onclick = () => {
+    document.getElementById('profile-modal').style.display = 'none';
+  };
+}
+// Adicionar evento ao nome do pescador no ranking
+function addProfileModalEvents() {
+  document.querySelectorAll('#ranking-list .font-bold.text-gray-800').forEach((el, idx) => {
+    el.style.cursor = 'pointer';
+    el.onclick = () => {
+      // Pega o usuário correspondente
+      const users = Array.from(document.querySelectorAll('#ranking-list .font-bold.text-gray-800'));
+      const userIdx = users.indexOf(el);
+      const rankedUsers = Array.from(document.querySelectorAll('#ranking-list .font-bold.text-gray-800')).map((e, i) => window._lastRankedUsers[i]);
+      showProfileModal(window._lastRankedUsers[userIdx]);
+    };
+  });
+}
+
+// Modal de explicação do sistema de pontos
+const openPointsInfoBtn = document.getElementById('open-points-info');
+const pointsInfoModal = document.getElementById('points-info-modal');
+const closePointsInfoModalBtn = document.getElementById('close-points-info-modal');
+if (openPointsInfoBtn && pointsInfoModal && closePointsInfoModalBtn) {
+  openPointsInfoBtn.onclick = () => { pointsInfoModal.style.display = 'flex'; };
+  closePointsInfoModalBtn.onclick = () => { pointsInfoModal.style.display = 'none'; };
+  pointsInfoModal.onclick = (e) => { if (e.target === pointsInfoModal) pointsInfoModal.style.display = 'none'; };
+} 
