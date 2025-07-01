@@ -95,8 +95,8 @@ catchForm.addEventListener('submit', async (e) => {
     const species = e.target.elements.species.value.trim();
     const weight = parseFloat(e.target.elements.weight.value);
     const photoFile = e.target.elements.photo.files[0];
-    if (!species || !weight || !photoFile) {
-        catchError.textContent = 'Todos os campos são obrigatórios!';
+    if (!species || !weight) {
+        catchError.textContent = 'Espécie e peso são obrigatórios!';
         submitCatchBtn.disabled = false;
         submitCatchBtn.innerHTML = 'Salvar Captura';
         return;
@@ -108,11 +108,14 @@ catchForm.addEventListener('submit', async (e) => {
         return;
     }
     try {
-        // 1. Upload image to Firebase Storage
-        const filePath = `catches/${currentUser.uid}/${Date.now()}-${photoFile.name}`;
-        const storageRef = ref(storage, filePath);
-        const snapshot = await uploadBytes(storageRef, photoFile);
-        const photoURL = await getDownloadURL(snapshot.ref);
+        let photoURL = '';
+        if (photoFile) {
+            // 1. Upload image to Firebase Storage
+            const filePath = `catches/${currentUser.uid}/${Date.now()}-${photoFile.name}`;
+            const storageRef = ref(storage, filePath);
+            const snapshot = await uploadBytes(storageRef, photoFile);
+            photoURL = await getDownloadURL(snapshot.ref);
+        }
         // 2. Add catch data to Firestore
         await addDoc(collection(db, `artifacts/${appId}/public/data/catches`), {
             userId: currentUser.uid,
@@ -234,7 +237,7 @@ function updateFeed(catches) {
                     <p class="text-sm text-gray-500">${timeAgo}</p>
                 </div>
             </div>
-            <img src="${c.photoURL}" alt="Peixe pescado: ${c.species}" class="w-full h-auto object-cover max-h-[600px]" onerror="this.onerror=null;this.src='https://placehold.co/600x400/CCCCCC/FFFFFF?text=Imagem+Inválida';">
+            <img src="${c.photoURL || 'https://placehold.co/600x400/CCCCCC/FFFFFF?text=Sem+Foto'}" alt="Peixe pescado: ${c.species}" class="w-full h-auto object-cover max-h-[600px]" onerror="this.onerror=null;this.src='https://placehold.co/600x400/CCCCCC/FFFFFF?text=Imagem+Inválida';">
             <div class="p-4">
                 <p class="text-lg font-semibold"><span class="font-bold">${c.species}</span> de <span class="font-bold">${c.weight.toFixed(2)} kg</span></p>
                 <div class="flex items-center mt-3 text-gray-600">
