@@ -161,19 +161,49 @@ function updateUI(catches) {
     updateFeed(catches);
 }
 
+function calculatePoints(catchData) {
+    // Fatores por espécie
+    const speciesFactors = {
+        'Tilápia': 0.5,
+        'Tambaqui': 3,
+        'Pirarara': 3,
+        'Dourado': 2.5,
+        'Traíra': 1.5
+    };
+    const factor = speciesFactors[catchData.species] || 1;
+    // Bônus pode ser expandido depois
+    const bonus = 0;
+    return (catchData.weight * factor) + bonus;
+}
+
+function getUserBadges(userStats) {
+    // Esqueleto: retorna insígnias fixas para teste
+    return [
+        { name: 'Pescador Iniciante', rarity: 'Comum', icon: '🎣' },
+        { name: 'Gigante do Lago', rarity: 'Rara', icon: '🐟' }
+    ];
+}
+
 function updateRanking(catches) {
     const statsMap = {};
     catches.forEach(c => {
         if (!statsMap[c.userId]) {
             statsMap[c.userId] = {
                 uid: c.userId, nickname: c.userNickname, photoURL: c.userPhotoURL,
-                totalWeight: 0, catchCount: 0,
+                totalWeight: 0, catchCount: 0, totalPoints: 0, catches: []
             };
         }
         statsMap[c.userId].totalWeight += c.weight;
         statsMap[c.userId].catchCount++;
+        statsMap[c.userId].totalPoints += calculatePoints(c);
+        statsMap[c.userId].catches.push(c);
     });
-    let rankedUsers = Object.values(statsMap).sort((a, b) => b.totalWeight - a.totalWeight);
+    // Seleção de modo de ranking
+    const mode = document.getElementById('ranking-mode')?.value || 'weight';
+    let rankedUsers = Object.values(statsMap);
+    if (mode === 'weight') rankedUsers.sort((a, b) => b.totalWeight - a.totalWeight);
+    else if (mode === 'count') rankedUsers.sort((a, b) => b.catchCount - a.catchCount);
+    else if (mode === 'points') rankedUsers.sort((a, b) => b.totalPoints - a.totalPoints);
     rankingList.innerHTML = '';
     if (rankedUsers.length === 0) {
         rankingList.innerHTML = `<p class="text-gray-500 text-center">Ninguém pescou nada ainda. Seja o primeiro!</p>`;
@@ -183,15 +213,9 @@ function updateRanking(catches) {
         const rank = index + 1;
         let rankIcon = `<span class="font-bold text-gray-500 w-8 text-center">${rank}.</span>`;
         let specialTitle = '';
-        if (rank === 1 && user.totalWeight > 0) {
-            rankIcon = `<i class="fas fa-crown crown-gold fa-lg w-8 text-center"></i>`;
-            specialTitle = `<div class="text-xs font-bold text-yellow-500 mt-1">PESCADOR FODA</div>`;
-        } else if (rank === 2 && user.totalWeight > 0) rankIcon = `<i class="fas fa-crown crown-silver fa-lg w-8 text-center"></i>`;
-        else if (rank === 3 && user.totalWeight > 0) rankIcon = `<i class="fas fa-crown crown-bronze fa-lg w-8 text-center"></i>`;
-        const fishersWithCatches = rankedUsers.filter(u => u.totalWeight > 0).length;
-        if (rank === rankedUsers.length && fishersWithCatches > 1 && user.totalWeight < rankedUsers[0].totalWeight) {
-             specialTitle = `<div class="text-xs font-bold text-red-700 mt-1 flex items-center justify-center gap-1"><i class="fas fa-poo text-amber-800"></i> PESCA FOFO</div>`;
-        }
+        // Exemplo de exibição de insígnias
+        const badges = getUserBadges(user);
+        const badgesHTML = badges.map(b => `<span title="${b.name} (${b.rarity})" class="text-xl mx-1">${b.icon}</span>`).join('');
         const userElement = document.createElement('div');
         userElement.className = `p-3 rounded-lg flex items-center space-x-3 transition-all ${rank === 1 ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-100'}`;
         userElement.innerHTML = `
@@ -199,7 +223,10 @@ function updateRanking(catches) {
             <img src="${user.photoURL}" alt="${user.nickname}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-300">
             <div class="flex-grow">
                 <p class="font-bold text-gray-800">${user.nickname}</p>
-                <p class="text-sm text-gray-600">${user.totalWeight.toFixed(2)} kg (${user.catchCount} peixes)</p>
+                <p class="text-sm text-gray-600">
+                    ${mode === 'weight' ? user.totalWeight.toFixed(2) + ' kg' : mode === 'count' ? user.catchCount + ' peixes' : user.totalPoints.toFixed(0) + ' pontos'}
+                </p>
+                <div class="mt-1">${badgesHTML}</div>
                 ${specialTitle}
             </div>`;
         rankingList.appendChild(userElement);
@@ -320,6 +347,10 @@ function formatTimeAgo(date) {
     if (interval > 1) return Math.floor(interval) + " minutos atrás";
     return "agora mesmo";
 }
+
+document.getElementById('ranking-mode')?.addEventListener('change', () => {
+    setupListeners(); // Atualiza o ranking ao trocar o modo
+});
 
 // --- Start the app ---
 window.onload = startApp; 
