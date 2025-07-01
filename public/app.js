@@ -161,8 +161,7 @@ function updateUI(catches) {
     updateFeed(catches);
 }
 
-function calculatePoints(catchData, userStats) {
-    // Fatores por espécie
+function calculatePoints(catchData) {
     const speciesFactors = {
         'Tilápia': 0.5,
         'Tambaqui': 3,
@@ -171,39 +170,7 @@ function calculatePoints(catchData, userStats) {
         'Traíra': 1.5
     };
     const factor = speciesFactors[catchData.species] || 1;
-    let basePoints = (catchData.weight * factor);
-    // Bônus de evento
-    if (userStats && userStats.participatedEvent) basePoints *= 2;
-    return basePoints;
-}
-
-function getComboBonus(catches) {
-    // +10% se registrar 3 pescarias em 24h
-    if (catches.length < 3) return 1;
-    // Ordena por data
-    const sorted = catches.map(c => new Date(c.timestamp)).sort((a, b) => a - b);
-    for (let i = 0; i < sorted.length - 2; i++) {
-        const t1 = sorted[i];
-        const t2 = sorted[i + 2];
-        if ((t2 - t1) / (1000 * 60 * 60) <= 24) return 1.1;
-    }
-    return 1;
-}
-
-function getInactivityPenalty(catches) {
-    // -100 pontos se ficar 15 dias sem registrar pescarias
-    if (catches.length === 0) return 0;
-    const sorted = catches.map(c => new Date(c.timestamp)).sort((a, b) => a - b);
-    let penalty = 0;
-    for (let i = 1; i < sorted.length; i++) {
-        const diffDays = (sorted[i] - sorted[i - 1]) / (1000 * 60 * 60 * 24);
-        if (diffDays >= 15) penalty -= 100;
-    }
-    // Também penaliza se o último registro for há mais de 15 dias
-    const now = new Date();
-    const last = sorted[sorted.length - 1];
-    if ((now - last) / (1000 * 60 * 60 * 24) >= 15) penalty -= 100;
-    return penalty;
+    return catchData.weight * factor;
 }
 
 function updateRanking(catches) {
@@ -220,24 +187,13 @@ function updateRanking(catches) {
         statsMap[c.userId].catchCount++;
         statsMap[c.userId].catches.push(c);
     });
-    // Cálculo de pontos com bônus e penalidades
     let rankedUsers = Object.values(statsMap);
     rankedUsers.forEach(user => {
         let points = 0;
         user.catches.forEach(c => {
-            points += calculatePoints(c, user);
+            points += calculatePoints(c);
         });
-        points *= getComboBonus(user.catches);
-        points += getInactivityPenalty(user.catches);
         user.totalPoints = points;
-        // Determinar títulos de ranking
-        if (user.totalPoints >= 7000) user.rankTitle = 'Pescador FODA 🐟';
-        else if (user.totalPoints >= 4000) user.rankTitle = 'Caçador de Monstros';
-        else if (user.totalPoints >= 2000) user.rankTitle = 'Rei do Rio';
-        else if (user.totalPoints >= 1000) user.rankTitle = 'Pescador Profissa';
-        else if (user.totalPoints >= 500) user.rankTitle = 'Pescador Constante';
-        else if (user.totalPoints >= 100) user.rankTitle = 'Pescador Iniciante';
-        else user.rankTitle = 'Pesca Fofo 🧸';
     });
     // Seleção de modo de ranking
     const mode = document.getElementById('ranking-mode')?.value || 'weight';
@@ -252,25 +208,45 @@ function updateRanking(catches) {
     rankedUsers.forEach((user, index) => {
         const rank = index + 1;
         let rankIcon = `<span class="font-bold text-gray-500 w-8 text-center">${rank}.</span>`;
-        // Insígnias reais do usuário
+        let title = '';
+        let nameClass = '';
+        if (rank === 1) {
+            title = 'Rei do Lago';
+            nameClass = 'text-yellow-600 font-extrabold';
+            rankIcon = `<i class="fas fa-crown crown-gold fa-lg w-8 text-center"></i>`;
+        } else if (rank === rankedUsers.length) {
+            title = 'Pesca Fofo';
+            nameClass = 'text-pink-600 font-bold';
+            rankIcon = `<i class="fas fa-poo text-amber-800 w-8 text-center"></i>`;
+        } else if (rank === 2) {
+            title = 'Veterano';
+            nameClass = 'text-blue-700 font-bold';
+            rankIcon = `<i class="fas fa-fish w-8 text-center"></i>`;
+        } else if (rank === 3) {
+            title = 'Desafiante';
+            nameClass = 'text-green-700 font-bold';
+            rankIcon = `<i class="fas fa-medal w-8 text-center"></i>`;
+        } else {
+            title = 'Aspirante';
+            nameClass = 'text-gray-700';
+        }
         const badges = getUserBadges(user);
-        const badgesHTML = badges.map(b => `<span title="${b.name} (${b.rarity}) - ${b.desc}\" class="text-xl mx-1">${b.icon}</span>`).join('');
+        const badgesHTML = badges.map(b => `<span title="${b.name} (${b.rarity}) - ${b.desc}" class="text-xl mx-1">${b.icon}</span>`).join('');
         const userElement = document.createElement('div');
-        userElement.className = `p-3 rounded-lg flex items-center space-x-3 transition-all ${rank === 1 ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-100'}`;
+        userElement.className = `p-3 rounded-lg flex items-center space-x-3 transition-all ${rank === 1 ? 'bg-yellow-100 border-2 border-yellow-400' : rank === rankedUsers.length ? 'bg-pink-100 border-2 border-pink-300' : 'bg-gray-100'}`;
         userElement.innerHTML = `
             ${rankIcon}
             <img src="${user.photoURL}" alt="${user.nickname}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-300">
             <div class="flex-grow">
-                <p class="font-bold text-gray-800">${user.nickname}</p>
+                <p class="font-bold ${nameClass}">${user.nickname}</p>
                 <p class="text-sm text-gray-600">
                     ${mode === 'weight' ? user.totalWeight.toFixed(2) + ' kg' : mode === 'count' ? user.catchCount + ' peixes' : user.totalPoints.toFixed(0) + ' pontos'}
                 </p>
                 <div class="mt-1">${badgesHTML}</div>
-                <div class="text-xs font-bold text-blue-700 mt-1">${user.rankTitle}</div>
+                <div class="text-xs font-bold mt-1">${title}</div>
             </div>`;
         rankingList.appendChild(userElement);
     });
-    // Salvar rankedUsers globalmente para uso no modal
     window._lastRankedUsers = rankedUsers;
     addProfileModalEvents();
 }
