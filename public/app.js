@@ -163,11 +163,17 @@ function updateUI(catches) {
 
 function calculatePoints(catchData) {
     const speciesFactors = {
-        'Tilápia': 0.5,
-        'Tambaqui': 3,
-        'Pirarara': 3,
+        'Barbado': 3,
         'Dourado': 2.5,
-        'Traíra': 1.5
+        'Matrinxã': 2,
+        'Pacu': 2,
+        'Pirarara': 3,
+        'Pirarucu': 4,
+        'Pintado': 3,
+        'Tambacu': 3,
+        'Tambaqui': 3,
+        'Tilapia': 0.5,
+        'Tucunaré': 4
     };
     const factor = speciesFactors[catchData.species] || 1;
     return catchData.weight * factor;

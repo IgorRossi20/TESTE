@@ -74,7 +74,20 @@
             <form id="catch-form">
                 <div class="mb-4">
                     <label class="block text-gray-700 font-bold mb-2">Espécie do Bicho:</label>
-                    <input type="text" name="species" placeholder="Ex: Tambaqui, Pirarara, Tilápia..." class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors" required>
+                    <select name="species" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors" required>
+                        <option value="">Selecione a espécie...</option>
+                        <option value="Barbado">Barbado</option>
+                        <option value="Dourado">Dourado</option>
+                        <option value="Matrinxã">Matrinxã</option>
+                        <option value="Pacu">Pacu</option>
+                        <option value="Pirarara">Pirarara</option>
+                        <option value="Pirarucu">Pirarucu</option>
+                        <option value="Pintado">Pintado</option>
+                        <option value="Tambacu">Tambacu</option>
+                        <option value="Tambaqui">Tambaqui</option>
+                        <option value="Tilapia">Tilapia</option>
+                        <option value="Tucunaré">Tucunaré</option>
+                    </select>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700 font-bold mb-2">Peso (em kg):</label>
@@ -120,11 +133,17 @@
           <ul class="list-disc ml-6">
             <li><b>🐟 Fator por espécie:</b></li>
             <ul class="ml-4">
-              <li>Tilápia: <span class="font-bold text-blue-700">0,5x</span></li>
-              <li>Tambaqui: <span class="font-bold text-blue-700">3x</span></li>
-              <li>Pirarara: <span class="font-bold text-blue-700">3x</span></li>
+              <li>Barbado: <span class="font-bold text-blue-700">3x</span></li>
               <li>Dourado: <span class="font-bold text-blue-700">2,5x</span></li>
-              <li>Traíra: <span class="font-bold text-blue-700">1,5x</span></li>
+              <li>Matrinxã: <span class="font-bold text-blue-700">2x</span></li>
+              <li>Pacu: <span class="font-bold text-blue-700">2x</span></li>
+              <li>Pirarara: <span class="font-bold text-blue-700">3x</span></li>
+              <li>Pirarucu: <span class="font-bold text-blue-700">4x</span></li>
+              <li>Pintado: <span class="font-bold text-blue-700">3x</span></li>
+              <li>Tambacu: <span class="font-bold text-blue-700">3x</span></li>
+              <li>Tambaqui: <span class="font-bold text-blue-700">3x</span></li>
+              <li>Tilapia: <span class="font-bold text-blue-700">0,5x</span></li>
+              <li>Tucunaré: <span class="font-bold text-blue-700">4x</span></li>
             </ul>
           </ul>
           <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded mb-2">
