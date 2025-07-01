@@ -1,4 +1,4 @@
-1import { firebaseConfig, appId } from '../firebaseConfig.js';
+import { firebaseConfig, appId } from '../firebaseConfig.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
