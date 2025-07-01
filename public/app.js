@@ -291,7 +291,7 @@ async function handleCommentSubmit(e) {
         userId: currentUser.uid,
         nickname: currentUser.nickname,
         text: commentText,
-        timestamp: serverTimestamp()
+        timestamp: new Date().toISOString()
     };
     const catchDocRef = doc(db, `artifacts/${appId}/public/data/catches`, catchId);
     try {
