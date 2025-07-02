@@ -74,15 +74,14 @@ onAuthStateChanged(auth, async (user) => {
       currentUser.nickname = userDoc.data().nickname;
       currentUser.photoURL = userDoc.data().photoURL || `https://placehold.co/100x100/3B82F6/FFFFFF?text=${userDoc.data().nickname.charAt(0).toUpperCase()}`;
     } else {
-      // Se não existir, criar com dados básicos
       currentUser.nickname = '';
       currentUser.photoURL = '';
     }
     hideAuthModal();
     showLogoutBtn();
     setupListeners();
+    mainContent.classList.remove('invisible');
   } else {
-    // Não logado
     currentUser = { uid: null, nickname: null, photoURL: null };
     showAuthModal();
     hideLogoutBtn();
@@ -575,4 +574,27 @@ if (openPointsInfoBtn && pointsInfoModal && closePointsInfoModalBtn) {
   openPointsInfoBtn.onclick = () => { pointsInfoModal.style.display = 'flex'; };
   closePointsInfoModalBtn.onclick = () => { pointsInfoModal.style.display = 'none'; };
   pointsInfoModal.onclick = (e) => { if (e.target === pointsInfoModal) pointsInfoModal.style.display = 'none'; };
-} 
+}
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  loginError.textContent = '';
+  loginError.style.color = '';
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value;
+  if (!email || !password) {
+    loginError.textContent = 'Preencha todos os campos!';
+    return;
+  }
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    loginForm.reset();
+    hideAuthModal();
+  } catch (err) {
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      loginError.textContent = 'E-mail ou senha incorretos.';
+    } else {
+      loginError.textContent = 'Erro ao fazer login. Tente novamente.';
+    }
+  }
+}); 
