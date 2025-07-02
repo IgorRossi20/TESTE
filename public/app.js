@@ -1,7 +1,7 @@
 import { firebaseConfig, appId } from '../firebaseConfig.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, setDoc, doc as firestoreDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
 // --- App Initialization ---
@@ -38,11 +38,104 @@ const feedContainer = document.getElementById('feed-container');
 let currentUser = { uid: null, nickname: null, photoURL: null };
 let unsubscribeCatches = null;
 
+// --- NOVA LÓGICA DE AUTENTICAÇÃO ---
+const authModal = document.getElementById('auth-modal');
+const authForm = document.getElementById('auth-form');
+const authEmail = document.getElementById('auth-email');
+const authPassword = document.getElementById('auth-password');
+const authNickname = document.getElementById('auth-nickname');
+const authError = document.getElementById('auth-error');
+const logoutBtn = document.getElementById('logout-btn');
+
+function showAuthModal() {
+  authModal.style.display = 'flex';
+}
+function hideAuthModal() {
+  authModal.style.display = 'none';
+}
+function showLogoutBtn() {
+  logoutBtn.classList.remove('hidden');
+}
+function hideLogoutBtn() {
+  logoutBtn.classList.add('hidden');
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // Usuário logado
+    currentUser.uid = user.uid;
+    // Buscar apelido do Firestore
+    const userDoc = await getDoc(firestoreDoc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      currentUser.nickname = userDoc.data().nickname;
+      currentUser.photoURL = userDoc.data().photoURL || '';
+    } else {
+      // Se não existir, pede para preencher apelido
+      currentUser.nickname = '';
+      currentUser.photoURL = '';
+      nicknameModal.style.display = 'flex';
+    }
+    hideAuthModal();
+    showLogoutBtn();
+    setupListeners();
+  } else {
+    // Não logado
+    currentUser = { uid: null, nickname: null, photoURL: null };
+    showAuthModal();
+    hideLogoutBtn();
+    loadingSpinner.style.display = 'none';
+    mainContent.classList.add('invisible');
+  }
+});
+
+authForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  authError.textContent = '';
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  const nickname = authNickname.value.trim();
+  if (!email || !password || !nickname) {
+    authError.textContent = 'Preencha todos os campos!';
+    return;
+  }
+  try {
+    // Tenta logar
+    let userCredential;
+    try {
+      userCredential = await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      // Se não existe, cadastra
+      if (err.code === 'auth/user-not-found') {
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Salva apelido no Firestore
+        await setDoc(firestoreDoc(db, 'users', userCredential.user.uid), {
+          nickname,
+          photoURL: '',
+          email
+        });
+      } else {
+        throw err;
+      }
+    }
+    // Atualiza apelido se já existe
+    await setDoc(firestoreDoc(db, 'users', userCredential.user.uid), {
+      nickname,
+      photoURL: '',
+      email
+    }, { merge: true });
+    hideAuthModal();
+  } catch (err) {
+    authError.textContent = 'Erro: ' + (err.message || 'Não foi possível autenticar.');
+  }
+});
+
+logoutBtn?.addEventListener('click', async () => {
+  await signOut(auth);
+});
+
 // --- Main App Logic ---
 async function startApp() {
     try {
-        const userCredential = await signInAnonymously(auth);
-        currentUser.uid = userCredential.user.uid;
         setupListeners();
     } catch (error) {
         console.error("Anonymous sign-in failed:", error);
