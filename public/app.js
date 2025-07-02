@@ -1,6 +1,6 @@
 import { firebaseConfig, appId } from '../firebaseConfig.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, setDoc, doc as firestoreDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
@@ -125,6 +125,29 @@ avatarOptions.forEach(option => {
   });
 });
 
+// Adicionar link de esqueci a senha no login
+const forgotPasswordLink = document.getElementById('forgot-password');
+
+if (forgotPasswordLink) {
+  forgotPasswordLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    loginError.textContent = '';
+    const email = loginEmail.value.trim();
+    if (!email) {
+      loginError.textContent = 'Digite seu e-mail para redefinir a senha.';
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      loginError.textContent = 'E-mail de redefinição enviado! Verifique sua caixa de entrada.';
+      loginError.style.color = 'green';
+    } catch (err) {
+      loginError.textContent = 'Erro ao enviar e-mail de redefinição. Verifique o e-mail digitado.';
+      loginError.style.color = '';
+    }
+  });
+}
+
 registerForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   registerError.textContent = '';
@@ -152,7 +175,11 @@ registerForm.addEventListener('submit', async (e) => {
     avatarOptions.forEach(o => o.classList.remove('border-blue-500'));
     hideAuthModal();
   } catch (err) {
-    registerError.textContent = 'Erro: ' + (err.message || 'Não foi possível cadastrar.');
+    if (err.code === 'auth/email-already-in-use') {
+      registerError.textContent = 'Este e-mail já está cadastrado. Faça login ou use outro e-mail.';
+    } else {
+      registerError.textContent = 'Erro: ' + (err.message || 'Não foi possível cadastrar.');
+    }
   }
 });
 
