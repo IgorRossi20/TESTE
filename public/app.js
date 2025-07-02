@@ -33,15 +33,22 @@ const feedContainer = document.getElementById('feed-container');
 let currentUser = { uid: null, nickname: null, photoURL: null };
 let unsubscribeCatches = null;
 
-// --- NOVA LÓGICA DE AUTENTICAÇÃO ---
+// --- NOVA LÓGICA DE AUTENTICAÇÃO COM TELAS SEPARADAS ---
 const authModal = document.getElementById('auth-modal');
-const authForm = document.getElementById('auth-form');
-const authEmail = document.getElementById('auth-email');
-const authPassword = document.getElementById('auth-password');
-const authNickname = document.getElementById('auth-nickname');
-const authPhotoUrl = document.getElementById('auth-photo-url');
-const authError = document.getElementById('auth-error');
-const logoutBtn = document.getElementById('logout-btn');
+const loginForm = document.getElementById('login-form');
+const loginEmail = document.getElementById('login-email');
+const loginPassword = document.getElementById('login-password');
+const loginError = document.getElementById('login-error');
+const registerForm = document.getElementById('register-form');
+const registerEmail = document.getElementById('register-email');
+const registerPassword = document.getElementById('register-password');
+const registerNickname = document.getElementById('register-nickname');
+const registerPhotoUrl = document.getElementById('register-photo-url');
+const registerError = document.getElementById('register-error');
+const showLoginBtn = document.getElementById('show-login');
+const showRegisterBtn = document.getElementById('show-register');
+const toRegisterLink = document.getElementById('to-register');
+const toLoginLink = document.getElementById('to-login');
 
 function showAuthModal() {
   authModal.style.display = 'flex';
@@ -83,50 +90,68 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-authForm?.addEventListener('submit', async (e) => {
+function showLoginForm() {
+  loginForm.classList.remove('hidden');
+  registerForm.classList.add('hidden');
+  showLoginBtn.classList.add('text-blue-700', 'border-b-2', 'border-blue-700');
+  showLoginBtn.classList.remove('text-gray-400');
+  showRegisterBtn.classList.remove('text-blue-700', 'border-b-2', 'border-blue-700');
+  showRegisterBtn.classList.add('text-gray-400');
+}
+function showRegisterForm() {
+  loginForm.classList.add('hidden');
+  registerForm.classList.remove('hidden');
+  showRegisterBtn.classList.add('text-blue-700', 'border-b-2', 'border-blue-700');
+  showRegisterBtn.classList.remove('text-gray-400');
+  showLoginBtn.classList.remove('text-blue-700', 'border-b-2', 'border-blue-700');
+  showLoginBtn.classList.add('text-gray-400');
+}
+showLoginBtn.addEventListener('click', showLoginForm);
+showRegisterBtn.addEventListener('click', showRegisterForm);
+toRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showRegisterForm(); });
+toLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
+
+// --- Lógica de seleção de avatar no cadastro ---
+const avatarOptions = document.querySelectorAll('.avatar-option');
+const registerAvatar = document.getElementById('register-avatar');
+const avatarError = document.getElementById('avatar-error');
+avatarOptions.forEach(option => {
+  option.addEventListener('click', () => {
+    avatarOptions.forEach(o => o.classList.remove('border-blue-500'));
+    option.classList.add('border-blue-500');
+    registerAvatar.value = option.getAttribute('data-avatar');
+    avatarError.textContent = '';
+  });
+});
+
+registerForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  authError.textContent = '';
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-  const nickname = authNickname.value.trim();
-  const photoURL = authPhotoUrl.value.trim();
-  
+  registerError.textContent = '';
+  avatarError.textContent = '';
+  const email = registerEmail.value.trim();
+  const password = registerPassword.value;
+  const nickname = registerNickname.value.trim();
+  const photoURL = registerAvatar.value;
   if (!email || !password || !nickname) {
-    authError.textContent = 'Preencha todos os campos obrigatórios!';
+    registerError.textContent = 'Preencha todos os campos obrigatórios!';
     return;
   }
-  
+  if (!photoURL) {
+    avatarError.textContent = 'Escolha um avatar!';
+    return;
+  }
   try {
-    // Tenta logar
-    let userCredential;
-    try {
-      userCredential = await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      // Se não existe, cadastra
-      if (err.code === 'auth/user-not-found') {
-        userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        throw err;
-      }
-    }
-    
-    // Salva/atualiza dados do usuário no Firestore
-    const userPhotoURL = photoURL || `https://placehold.co/100x100/3B82F6/FFFFFF?text=${nickname.charAt(0).toUpperCase()}`;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(firestoreDoc(db, 'users', userCredential.user.uid), {
       nickname,
-      photoURL: userPhotoURL,
+      photoURL,
       email
     });
-    
-    // Atualiza currentUser
-    currentUser.nickname = nickname;
-    currentUser.photoURL = userPhotoURL;
-    
-    // Limpa formulário
-    authForm.reset();
+    registerForm.reset();
+    avatarOptions.forEach(o => o.classList.remove('border-blue-500'));
     hideAuthModal();
   } catch (err) {
-    authError.textContent = 'Erro: ' + (err.message || 'Não foi possível autenticar.');
+    registerError.textContent = 'Erro: ' + (err.message || 'Não foi possível cadastrar.');
   }
 });
 
