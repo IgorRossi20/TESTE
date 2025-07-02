@@ -1,7 +1,7 @@
 import { firebaseConfig, appId } from '../firebaseConfig.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, setDoc, doc as firestoreDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, setDoc, doc as firestoreDoc, getDocs, writeBatch, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
 // --- App Initialization ---
@@ -667,8 +667,18 @@ editProfileForm.addEventListener('submit', async (e) => {
     }, { merge: true });
     currentUser.nickname = nickname;
     currentUser.photoURL = photoURL;
+    // Atualizar todas as capturas do usuário
+    const catchesQuery = query(collection(db, `artifacts/${appId}/public/data/catches`), where('userId', '==', currentUser.uid));
+    const snapshot = await getDocs(catchesQuery);
+    const batch = writeBatch(db);
+    snapshot.forEach(docSnap => {
+      batch.update(docSnap.ref, {
+        userNickname: nickname,
+        userPhotoURL: photoURL
+      });
+    });
+    await batch.commit();
     editProfileModal.style.display = 'none';
-    // Atualizar UI imediatamente se necessário
     setupListeners();
   } catch (err) {
     editProfileError.textContent = 'Erro ao salvar perfil. Tente novamente.';
