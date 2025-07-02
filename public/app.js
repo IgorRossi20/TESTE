@@ -29,6 +29,7 @@ const fileNameDisplay = document.getElementById('file-name');
 const submitCatchBtn = document.getElementById('submit-catch-btn');
 const rankingList = document.getElementById('ranking-list');
 const feedContainer = document.getElementById('feed-container');
+const logoutBtn = document.getElementById('logout-btn');
 
 let currentUser = { uid: null, nickname: null, photoURL: null };
 let unsubscribeCatches = null;
