@@ -53,17 +53,7 @@
             </div>
         </main>
     </div>
-    <!-- Nickname Modal -->
-    <div id="nickname-modal" class="modal">
-        <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-md">
-             <h3 class="text-2xl font-bold text-center text-gray-700 mb-4">Identifique-se, Pescador!</h3>
-             <p class="text-center text-gray-500 mb-6">Para entrar no ranking, diga-nos seu nome de guerra.</p>
-             <input type="text" id="nickname-input" placeholder="Seu Nome de Guerra (Apelido)" class="w-full p-3 mb-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors">
-             <input type="text" id="photo-url-input" placeholder="URL da sua foto de perfil (Opcional)" class="w-full p-3 mb-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors">
-             <button id="save-nickname-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Continuar</button>
-             <p id="nickname-error" class="text-red-500 text-sm mt-4 text-center"></p>
-        </div>
-    </div>
+
     <!-- Add Catch Modal -->
     <div id="add-catch-modal" class="modal">
         <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-lg">
@@ -173,6 +163,7 @@
           <input type="email" id="auth-email" placeholder="E-mail" class="w-full p-3 border-2 border-gray-300 rounded-lg" required>
           <input type="password" id="auth-password" placeholder="Senha" class="w-full p-3 border-2 border-gray-300 rounded-lg" required>
           <input type="text" id="auth-nickname" placeholder="Apelido (nome de guerra)" class="w-full p-3 border-2 border-gray-300 rounded-lg" required>
+          <input type="text" id="auth-photo-url" placeholder="URL da sua foto de perfil (Opcional)" class="w-full p-3 border-2 border-gray-300 rounded-lg">
           <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-transform">Entrar / Cadastrar</button>
           <p id="auth-error" class="text-red-500 text-sm mt-2 text-center"></p>
         </form>

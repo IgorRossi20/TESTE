@@ -19,11 +19,6 @@ try {
 // --- DOM Elements ---
 const loadingSpinner = document.getElementById('loading-spinner');
 const mainContent = document.getElementById('main-content');
-const nicknameModal = document.getElementById('nickname-modal');
-const nicknameInput = document.getElementById('nickname-input');
-const photoUrlInput = document.getElementById('photo-url-input');
-const saveNicknameBtn = document.getElementById('save-nickname-btn');
-const nicknameError = document.getElementById('nickname-error');
 const addCatchBtn = document.getElementById('add-catch-btn');
 const addCatchModal = document.getElementById('add-catch-modal');
 const closeCatchModalBtn = document.getElementById('close-catch-modal');
@@ -44,6 +39,7 @@ const authForm = document.getElementById('auth-form');
 const authEmail = document.getElementById('auth-email');
 const authPassword = document.getElementById('auth-password');
 const authNickname = document.getElementById('auth-nickname');
+const authPhotoUrl = document.getElementById('auth-photo-url');
 const authError = document.getElementById('auth-error');
 const logoutBtn = document.getElementById('logout-btn');
 
@@ -68,12 +64,11 @@ onAuthStateChanged(auth, async (user) => {
     const userDoc = await getDoc(firestoreDoc(db, 'users', user.uid));
     if (userDoc.exists()) {
       currentUser.nickname = userDoc.data().nickname;
-      currentUser.photoURL = userDoc.data().photoURL || '';
+      currentUser.photoURL = userDoc.data().photoURL || `https://placehold.co/100x100/3B82F6/FFFFFF?text=${userDoc.data().nickname.charAt(0).toUpperCase()}`;
     } else {
-      // Se não existir, pede para preencher apelido
+      // Se não existir, criar com dados básicos
       currentUser.nickname = '';
       currentUser.photoURL = '';
-      nicknameModal.style.display = 'flex';
     }
     hideAuthModal();
     showLogoutBtn();
@@ -94,10 +89,13 @@ authForm?.addEventListener('submit', async (e) => {
   const email = authEmail.value.trim();
   const password = authPassword.value;
   const nickname = authNickname.value.trim();
+  const photoURL = authPhotoUrl.value.trim();
+  
   if (!email || !password || !nickname) {
-    authError.textContent = 'Preencha todos os campos!';
+    authError.textContent = 'Preencha todos os campos obrigatórios!';
     return;
   }
+  
   try {
     // Tenta logar
     let userCredential;
@@ -107,22 +105,25 @@ authForm?.addEventListener('submit', async (e) => {
       // Se não existe, cadastra
       if (err.code === 'auth/user-not-found') {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Salva apelido no Firestore
-        await setDoc(firestoreDoc(db, 'users', userCredential.user.uid), {
-          nickname,
-          photoURL: '',
-          email
-        });
       } else {
         throw err;
       }
     }
-    // Atualiza apelido se já existe
+    
+    // Salva/atualiza dados do usuário no Firestore
+    const userPhotoURL = photoURL || `https://placehold.co/100x100/3B82F6/FFFFFF?text=${nickname.charAt(0).toUpperCase()}`;
     await setDoc(firestoreDoc(db, 'users', userCredential.user.uid), {
       nickname,
-      photoURL: '',
+      photoURL: userPhotoURL,
       email
-    }, { merge: true });
+    });
+    
+    // Atualiza currentUser
+    currentUser.nickname = nickname;
+    currentUser.photoURL = userPhotoURL;
+    
+    // Limpa formulário
+    authForm.reset();
     hideAuthModal();
   } catch (err) {
     authError.textContent = 'Erro: ' + (err.message || 'Não foi possível autenticar.');
@@ -136,33 +137,22 @@ logoutBtn?.addEventListener('click', async () => {
 // --- Main App Logic ---
 async function startApp() {
     try {
-        setupListeners();
+        // A lógica de autenticação agora é controlada pelo onAuthStateChanged
+        // Não precisa fazer nada aqui
     } catch (error) {
-        console.error("Anonymous sign-in failed:", error);
+        console.error("App initialization failed:", error);
         loadingSpinner.innerHTML = '<p class="text-red-500">Não foi possível iniciar. Tente recarregar a página.</p>';
     }
 }
 
 // --- Event Listeners ---
 addCatchBtn.addEventListener('click', () => {
+    // Se não tem nickname, mostra modal de auth
     if (!currentUser.nickname) {
-        nicknameModal.style.display = 'flex';
+        showAuthModal();
     } else {
         addCatchModal.style.display = 'flex';
     }
-});
-
-saveNicknameBtn.addEventListener('click', () => {
-    nicknameError.textContent = '';
-    const nickname = nicknameInput.value.trim();
-    if (!nickname) {
-        nicknameError.textContent = 'O nome de guerra é obrigatório!';
-        return;
-    }
-    currentUser.nickname = nickname;
-    currentUser.photoURL = photoUrlInput.value.trim() || `https://placehold.co/100x100/3B82F6/FFFFFF?text=${nickname.charAt(0).toUpperCase()}`;
-    nicknameModal.style.display = 'none';
-    addCatchModal.style.display = 'flex';
 });
 
 fishPhotoInput.addEventListener('change', () => {
