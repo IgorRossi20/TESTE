@@ -19,10 +19,14 @@
     </div>
     <!-- Main Content -->
     <div id="main-content" class="invisible">
-        <header class="bg-blue-800 shadow-lg p-4">
-            <div class="container mx-auto flex justify-center items-center relative">
-                <i class="fas fa-fish text-white text-4xl absolute left-0 ml-6"></i>
-                <h1 class="text-4xl font-bangers text-white tracking-widest">TILAPIOS</h1>
+        <header class="bg-blue-800 shadow-lg p-4 sticky top-0 z-50">
+            <div class="container mx-auto flex justify-between items-center relative">
+                <div class="flex gap-2 items-center">
+                    <button id="profile-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 hidden">Meu Perfil</button>
+                    <button id="report-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 hidden">Meus Lançamentos</button>
+                </div>
+                <h1 class="text-4xl font-bangers text-white tracking-widest text-center flex-1">TILAPIOS</h1>
+                <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-700 hidden">Sair</button>
             </div>
         </header>
         <main class="container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -197,10 +201,6 @@
         </form>
       </div>
     </div>
-    <!-- Botão de logout -->
-    <button id="logout-btn" class="fixed top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-700 z-[200] hidden">Sair</button>
-    <!-- Botão de perfil -->
-    <button id="profile-btn" class="fixed top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 z-[200] hidden">Meu Perfil</button>
     <!-- Modal de Edição de Perfil -->
     <div id="edit-profile-modal" class="modal" style="display:none;">
       <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-md">
@@ -225,6 +225,76 @@
           <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-transform">Salvar</button>
           <p id="edit-profile-error" class="text-red-500 text-sm mt-2 text-center"></p>
         </form>
+      </div>
+    </div>
+    <!-- Modal de Edição de Captura -->
+    <div id="edit-catch-modal" class="modal" style="display:none;">
+      <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-lg">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-3xl font-bangers text-blue-800 tracking-wider">Editar Captura</h2>
+          <button id="close-edit-catch-modal" class="text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+        </div>
+        <form id="edit-catch-form">
+          <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">Espécie do Bicho:</label>
+            <select name="species" id="edit-species" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors" required>
+              <option value="">Selecione a espécie...</option>
+              <option value="Barbado">Barbado</option>
+              <option value="Dourado">Dourado</option>
+              <option value="Matrinxã">Matrinxã</option>
+              <option value="Pacu">Pacu</option>
+              <option value="Pirarara">Pirarara</option>
+              <option value="Pirarucu">Pirarucu</option>
+              <option value="Pintado">Pintado</option>
+              <option value="Tambacu">Tambacu</option>
+              <option value="Tambaqui">Tambaqui</option>
+              <option value="Tilapia">Tilapia</option>
+              <option value="Tucunaré">Tucunaré</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">Peso (em kg):</label>
+            <input type="number" step="0.01" name="weight" id="edit-weight" placeholder="Ex: 5.75" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors" required>
+          </div>
+          <div class="mb-6">
+            <label class="block text-gray-700 font-bold mb-2">Foto com o Troféu:</label>
+            <label for="edit-fish-photo-input" class="w-full cursor-pointer bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg inline-block text-center hover:bg-gray-300 transition-colors">
+              <i class="fas fa-camera"></i> Tirar / Escolher Nova Foto
+            </label>
+            <input type="file" id="edit-fish-photo-input" name="photo" accept="image/*" class="hidden">
+            <p id="edit-file-name" class="text-sm text-gray-500 mt-2"></p>
+            <img id="edit-current-photo" src="" alt="Foto atual" class="w-32 h-32 object-cover rounded-lg mt-2 border-2 border-gray-300">
+          </div>
+          <button type="submit" id="submit-edit-catch-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 text-lg disabled:bg-gray-400">
+            Salvar Alterações
+          </button>
+          <p id="edit-catch-error" class="text-red-500 text-sm mt-4 text-center"></p>
+        </form>
+      </div>
+    </div>
+    <!-- Modal de Relatório -->
+    <div id="report-modal" class="modal" style="display:none;">
+      <div class="modal-content bg-white shadow-2xl rounded-lg p-8 w-full max-w-3xl">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-3xl font-bangers text-blue-800 tracking-wider">Relatório de Lançamentos</h2>
+          <button id="close-report-modal" class="text-gray-500 hover:text-red-600 text-2xl">&times;</button>
+        </div>
+        <div id="report-filter" class="mb-4"></div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm text-left">
+            <thead>
+              <tr class="bg-blue-100">
+                <th class="px-4 py-2">Espécie</th>
+                <th class="px-4 py-2">Peso (kg)</th>
+                <th class="px-4 py-2">Data</th>
+                <th class="px-4 py-2">Foto</th>
+                <th class="px-4 py-2">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body"></tbody>
+          </table>
+        </div>
+        <p id="report-empty" class="text-gray-500 text-center mt-4 hidden">Nenhum lançamento encontrado.</p>
       </div>
     </div>
     <script type="module" src="firebaseConfig.js"></script>

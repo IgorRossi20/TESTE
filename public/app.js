@@ -1,7 +1,7 @@
 import { firebaseConfig, appId } from '../firebaseConfig.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, setDoc, doc as firestoreDoc, getDocs, writeBatch, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, setDoc, doc as firestoreDoc, getDocs, writeBatch, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
 // --- App Initialization ---
@@ -31,7 +31,7 @@ const rankingList = document.getElementById('ranking-list');
 const feedContainer = document.getElementById('feed-container');
 const logoutBtn = document.getElementById('logout-btn');
 
-let currentUser = { uid: null, nickname: null, photoURL: null };
+let currentUser = { uid: null, nickname: null, photoURL: null, email: null };
 let unsubscribeCatches = null;
 
 // --- NOVA LÓGICA DE AUTENTICAÇÃO COM TELAS SEPARADAS ---
@@ -68,6 +68,7 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     // Usuário logado
     currentUser.uid = user.uid;
+    currentUser.email = user.email;
     // Buscar apelido do Firestore
     const userDoc = await getDoc(firestoreDoc(db, 'users', user.uid));
     if (userDoc.exists()) {
@@ -82,7 +83,7 @@ onAuthStateChanged(auth, async (user) => {
     setupListeners();
     mainContent.classList.remove('invisible');
   } else {
-    currentUser = { uid: null, nickname: null, photoURL: null };
+    currentUser = { uid: null, nickname: null, photoURL: null, email: null };
     showAuthModal();
     hideLogoutBtn();
     loadingSpinner.style.display = 'none';
@@ -397,6 +398,11 @@ function updateRanking(catches) {
     addProfileModalEvents();
 }
 
+function isAdmin() {
+  // Substitua pelo seu e-mail de admin
+  return currentUser.email === 'igor.rossi10@gmail.com';
+}
+
 function updateFeed(catches) {
     feedContainer.innerHTML = '';
     if (catches.length === 0) {
@@ -419,6 +425,16 @@ function updateFeed(catches) {
                     <span>${comment.text}</span>
                 </div>
             `).join('');
+        }
+        // Botões de editar/excluir (só para dono ou admin)
+        let editDeleteHTML = '';
+        if (c.userId === currentUser.uid || isAdmin()) {
+          editDeleteHTML = `
+            <div class="flex gap-2 mt-2">
+              <button class="edit-catch-btn bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded" data-catch-id="${c.id}"><i class="fas fa-edit"></i> Editar</button>
+              <button class="delete-catch-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" data-catch-id="${c.id}"><i class="fas fa-trash"></i> Excluir</button>
+            </div>
+          `;
         }
         card.innerHTML = `
             <div class="p-4 flex items-center space-x-3 border-b border-gray-200">
@@ -443,12 +459,16 @@ function updateFeed(catches) {
                         <input type="text" class="w-full border-2 border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-400" placeholder="Adicione um comentário..." required>
                         <button type="submit" class="bg-blue-500 text-white font-bold px-4 py-2 rounded-lg hover:bg-blue-600"><i class="fas fa-paper-plane"></i></button>
                     </form>
+                    ${editDeleteHTML}
                 </div>
             </div>`;
         feedContainer.appendChild(card);
     });
     document.querySelectorAll('.like-btn').forEach(btn => btn.addEventListener('click', handleLikeClick));
     document.querySelectorAll('.comment-form').forEach(form => form.addEventListener('submit', handleCommentSubmit));
+    // Eventos para editar/excluir
+    document.querySelectorAll('.edit-catch-btn').forEach(btn => btn.addEventListener('click', handleEditCatch));
+    document.querySelectorAll('.delete-catch-btn').forEach(btn => btn.addEventListener('click', handleDeleteCatch));
 }
 
 async function handleLikeClick(e) {
@@ -494,6 +514,42 @@ async function handleCommentSubmit(e) {
         console.error("Error adding comment: ", error);
         alert("Não foi possível adicionar o comentário.");
     }
+}
+
+// Funções base para editar/excluir
+async function handleEditCatch(e) {
+  const catchId = e.currentTarget.dataset.catchId;
+  // Buscar dados da captura
+  const catchDocRef = doc(db, `artifacts/${appId}/public/data/catches`, catchId);
+  const catchDoc = await getDoc(catchDocRef);
+  if (!catchDoc.exists()) return;
+  const c = catchDoc.data();
+  // Permissão: só dono ou admin
+  if (c.userId !== currentUser.uid && !isAdmin()) {
+    alert('Você não tem permissão para editar esta captura.');
+    return;
+  }
+  // Preencher modal
+  editingCatchId = catchId;
+  editSpecies.value = c.species;
+  editWeight.value = c.weight;
+  editCurrentPhoto.src = c.photoURL || '';
+  editingPhotoURL = c.photoURL || '';
+  editFileNameDisplay.textContent = '';
+  editCatchError.textContent = '';
+  editCatchModal.style.display = 'flex';
+}
+
+async function handleDeleteCatch(e) {
+  const catchId = e.currentTarget.dataset.catchId;
+  if (confirm('Tem certeza que deseja excluir esta captura?')) {
+    try {
+      await deleteDoc(doc(db, `artifacts/${appId}/public/data/catches`, catchId));
+      alert('Captura excluída com sucesso!');
+    } catch (err) {
+      alert('Erro ao excluir captura.');
+    }
+  }
 }
 
 // --- Utility Functions ---
@@ -692,6 +748,178 @@ onAuthStateChanged(auth, async (user) => {
     // ...restante do código...
   } else {
     hideProfileBtn();
+    // ...restante do código...
+  }
+});
+
+// Modal de edição de captura
+const editCatchModal = document.getElementById('edit-catch-modal');
+const closeEditCatchModalBtn = document.getElementById('close-edit-catch-modal');
+const editCatchForm = document.getElementById('edit-catch-form');
+const editSpecies = document.getElementById('edit-species');
+const editWeight = document.getElementById('edit-weight');
+const editFishPhotoInput = document.getElementById('edit-fish-photo-input');
+const editFileNameDisplay = document.getElementById('edit-file-name');
+const editCurrentPhoto = document.getElementById('edit-current-photo');
+const submitEditCatchBtn = document.getElementById('submit-edit-catch-btn');
+const editCatchError = document.getElementById('edit-catch-error');
+let editingCatchId = null;
+let editingPhotoURL = '';
+
+closeEditCatchModalBtn.addEventListener('click', () => {
+  editCatchModal.style.display = 'none';
+  editCatchForm.reset();
+  editFileNameDisplay.textContent = '';
+  editCurrentPhoto.src = '';
+  editCatchError.textContent = '';
+});
+
+editFishPhotoInput.addEventListener('change', () => {
+  if (editFishPhotoInput.files.length > 0) {
+    editFileNameDisplay.textContent = editFishPhotoInput.files[0].name;
+  } else {
+    editFileNameDisplay.textContent = '';
+  }
+});
+
+editCatchForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  editCatchError.textContent = '';
+  submitEditCatchBtn.disabled = true;
+  submitEditCatchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+  const species = editSpecies.value.trim();
+  const weight = parseFloat(editWeight.value);
+  const photoFile = editFishPhotoInput.files[0];
+  if (!species || !weight) {
+    editCatchError.textContent = 'Espécie e peso são obrigatórios!';
+    submitEditCatchBtn.disabled = false;
+    submitEditCatchBtn.innerHTML = 'Salvar Alterações';
+    return;
+  }
+  if (weight <= 0) {
+    editCatchError.textContent = 'O peso deve ser maior que zero!';
+    submitEditCatchBtn.disabled = false;
+    submitEditCatchBtn.innerHTML = 'Salvar Alterações';
+    return;
+  }
+  try {
+    let photoURL = editingPhotoURL;
+    if (photoFile) {
+      // Upload nova foto
+      const filePath = `catches/${currentUser.uid}/${Date.now()}-${photoFile.name}`;
+      const storageRef = ref(storage, filePath);
+      const snapshot = await uploadBytes(storageRef, photoFile);
+      photoURL = await getDownloadURL(snapshot.ref);
+    }
+    // Atualizar dados no Firestore
+    await updateDoc(doc(db, `artifacts/${appId}/public/data/catches`, editingCatchId), {
+      species,
+      weight,
+      photoURL
+    });
+    editCatchModal.style.display = 'none';
+    editCatchForm.reset();
+    editFileNameDisplay.textContent = '';
+    editCurrentPhoto.src = '';
+  } catch (err) {
+    editCatchError.textContent = 'Erro ao salvar alterações. Tente novamente.';
+  } finally {
+    submitEditCatchBtn.disabled = false;
+    submitEditCatchBtn.innerHTML = 'Salvar Alterações';
+  }
+});
+
+const reportBtn = document.getElementById('report-btn');
+const reportModal = document.getElementById('report-modal');
+const closeReportModalBtn = document.getElementById('close-report-modal');
+const reportTableBody = document.getElementById('report-table-body');
+const reportEmpty = document.getElementById('report-empty');
+const reportFilter = document.getElementById('report-filter');
+
+function showReportBtn() {
+  reportBtn.classList.remove('hidden');
+}
+function hideReportBtn() {
+  reportBtn.classList.add('hidden');
+}
+
+reportBtn.addEventListener('click', async () => {
+  await renderReport();
+  reportModal.style.display = 'flex';
+});
+closeReportModalBtn.addEventListener('click', () => {
+  reportModal.style.display = 'none';
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target === reportModal) {
+    reportModal.style.display = 'none';
+  }
+});
+
+async function renderReport() {
+  reportTableBody.innerHTML = '';
+  reportEmpty.classList.add('hidden');
+  reportFilter.innerHTML = '';
+  let catches = [];
+  if (isAdmin()) {
+    // Admin pode filtrar por usuário
+    const snapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/catches`));
+    catches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Gerar filtro de usuário
+    const users = {};
+    catches.forEach(c => { users[c.userId] = c.userNickname; });
+    const userOptions = Object.entries(users).map(([uid, name]) => `<option value="${uid}">${name}</option>`).join('');
+    reportFilter.innerHTML = `<label class="mr-2 font-bold">Filtrar por usuário:</label><select id="report-user-filter" class="border p-2 rounded"><option value="">Todos</option>${userOptions}</select>`;
+    const userFilter = document.getElementById('report-user-filter');
+    userFilter.addEventListener('change', () => {
+      const uid = userFilter.value;
+      renderReportTable(uid ? catches.filter(c => c.userId === uid) : catches);
+    });
+    renderReportTable(catches);
+  } else {
+    // Usuário comum vê só as próprias
+    const snapshot = await getDocs(query(collection(db, `artifacts/${appId}/public/data/catches`), where('userId', '==', currentUser.uid)));
+    catches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderReportTable(catches);
+  }
+}
+
+function renderReportTable(catches) {
+  reportTableBody.innerHTML = '';
+  if (!catches.length) {
+    reportEmpty.classList.remove('hidden');
+    return;
+  }
+  reportEmpty.classList.add('hidden');
+  catches.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="px-4 py-2">${c.species}</td>
+      <td class="px-4 py-2">${c.weight.toFixed(2)}</td>
+      <td class="px-4 py-2">${c.timestamp && c.timestamp.toDate ? c.timestamp.toDate().toLocaleString('pt-BR') : '-'}</td>
+      <td class="px-4 py-2"><img src="${c.photoURL || ''}" alt="foto" class="w-12 h-12 object-cover rounded"></td>
+      <td class="px-4 py-2">
+        ${(c.userId === currentUser.uid || isAdmin()) ? `
+          <button class="edit-catch-btn bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded text-xs" data-catch-id="${c.id}"><i class="fas fa-edit"></i></button>
+          <button class="delete-catch-btn bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs" data-catch-id="${c.id}"><i class="fas fa-trash"></i></button>
+        ` : ''}
+      </td>
+    `;
+    reportTableBody.appendChild(tr);
+  });
+  // Reaplicar eventos
+  document.querySelectorAll('.edit-catch-btn').forEach(btn => btn.addEventListener('click', handleEditCatch));
+  document.querySelectorAll('.delete-catch-btn').forEach(btn => btn.addEventListener('click', handleDeleteCatch));
+}
+
+// Mostrar botão de relatório quando logado
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    showReportBtn();
+    // ...restante do código...
+  } else {
+    hideReportBtn();
     // ...restante do código...
   }
 }); 
