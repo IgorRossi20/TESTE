@@ -597,4 +597,91 @@ loginForm.addEventListener('submit', async (e) => {
       loginError.textContent = 'Erro ao fazer login. Tente novamente.';
     }
   }
+});
+
+const profileBtn = document.getElementById('profile-btn');
+const editProfileModal = document.getElementById('edit-profile-modal');
+const editProfileForm = document.getElementById('edit-profile-form');
+const editNickname = document.getElementById('edit-nickname');
+const editAvatarOptions = document.querySelectorAll('.edit-avatar-option');
+const editAvatar = document.getElementById('edit-avatar');
+const editAvatarError = document.getElementById('edit-avatar-error');
+const editProfileError = document.getElementById('edit-profile-error');
+
+function showProfileBtn() {
+  profileBtn.classList.remove('hidden');
+}
+function hideProfileBtn() {
+  profileBtn.classList.add('hidden');
+}
+
+profileBtn.addEventListener('click', () => {
+  // Preencher campos com dados atuais
+  editNickname.value = currentUser.nickname || '';
+  editAvatar.value = currentUser.photoURL || '';
+  editAvatarOptions.forEach(o => {
+    if (o.getAttribute('data-avatar') === currentUser.photoURL) {
+      o.classList.add('border-blue-500');
+    } else {
+      o.classList.remove('border-blue-500');
+    }
+  });
+  editProfileModal.style.display = 'flex';
+});
+
+editAvatarOptions.forEach(option => {
+  option.addEventListener('click', () => {
+    editAvatarOptions.forEach(o => o.classList.remove('border-blue-500'));
+    option.classList.add('border-blue-500');
+    editAvatar.value = option.getAttribute('data-avatar');
+    editAvatarError.textContent = '';
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target === editProfileModal) {
+    editProfileModal.style.display = 'none';
+    editProfileError.textContent = '';
+    editAvatarError.textContent = '';
+  }
+});
+
+editProfileForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  editProfileError.textContent = '';
+  editAvatarError.textContent = '';
+  const nickname = editNickname.value.trim();
+  const photoURL = editAvatar.value;
+  if (!nickname) {
+    editProfileError.textContent = 'O nome de guerra é obrigatório!';
+    return;
+  }
+  if (!photoURL) {
+    editAvatarError.textContent = 'Escolha um avatar!';
+    return;
+  }
+  try {
+    await setDoc(firestoreDoc(db, 'users', currentUser.uid), {
+      nickname,
+      photoURL
+    }, { merge: true });
+    currentUser.nickname = nickname;
+    currentUser.photoURL = photoURL;
+    editProfileModal.style.display = 'none';
+    // Atualizar UI imediatamente se necessário
+    setupListeners();
+  } catch (err) {
+    editProfileError.textContent = 'Erro ao salvar perfil. Tente novamente.';
+  }
+});
+
+// Mostrar botão de perfil quando logado
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    showProfileBtn();
+    // ...restante do código...
+  } else {
+    hideProfileBtn();
+    // ...restante do código...
+  }
 }); 
