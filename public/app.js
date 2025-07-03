@@ -193,10 +193,13 @@ registerForm.addEventListener('submit', async (e) => {
   }
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const photoFile = registerPhotoInput.files[0];
+    const file = registerPhotoInput.files[0];
+    console.log('Arquivo:', file);
+    console.log('Tipo:', typeof file);
+    console.log('Nome:', file.name);
     let photoURL = '';
-    if (photoFile) {
-      photoURL = await uploadToSupabase(photoFile, Date.now()); // usar timestamp já que userId ainda não existe
+    if (file) {
+      photoURL = await uploadToSupabase(file, Date.now()); // usar timestamp já que userId ainda não existe
     } else {
       photoURL = registerAvatar.value;
     }
@@ -264,7 +267,7 @@ catchForm.addEventListener('submit', async (e) => {
     submitCatchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
     const species = e.target.elements.species.value.trim();
     const weight = parseFloat(e.target.elements.weight.value);
-    const photoFile = e.target.elements.photo.files[0];
+    const file = e.target.elements.photo.files[0];
     if (!species || !weight) {
         catchError.textContent = 'Espécie e peso são obrigatórios!';
         submitCatchBtn.disabled = false;
@@ -279,9 +282,9 @@ catchForm.addEventListener('submit', async (e) => {
     }
     try {
         let photoURL = '';
-        if (photoFile) {
+        if (file) {
             // Upload para Supabase Storage
-            photoURL = await uploadToSupabase(photoFile, currentUser.uid);
+            photoURL = await uploadToSupabase(file, currentUser.uid);
         }
         // 2. Add catch data to Firestore
         await addDoc(collection(db, `artifacts/${appId}/public/data/catches`), {
@@ -749,10 +752,13 @@ editProfileForm.addEventListener('submit', async (e) => {
     return;
   }
   try {
-    const photoFile = editProfilePhotoInput.files[0];
+    const file = editProfilePhotoInput.files[0];
+    console.log('Arquivo:', file);
+    console.log('Tipo:', typeof file);
+    console.log('Nome:', file.name);
     let photoURL = '';
-    if (photoFile) {
-      photoURL = await uploadToSupabase(photoFile, currentUser.uid);
+    if (file) {
+      photoURL = await uploadToSupabase(file, currentUser.uid);
     } else {
       photoURL = editAvatar.value;
     }
@@ -829,7 +835,7 @@ editCatchForm.addEventListener('submit', async (e) => {
   submitEditCatchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
   const species = editSpecies.value.trim();
   const weight = parseFloat(editWeight.value);
-  const photoFile = editFishPhotoInput.files[0];
+  const file = editFishPhotoInput.files[0];
   if (!species || !weight) {
     editCatchError.textContent = 'Espécie e peso são obrigatórios!';
     submitEditCatchBtn.disabled = false;
@@ -844,9 +850,9 @@ editCatchForm.addEventListener('submit', async (e) => {
   }
   try {
     let photoURL = editingPhotoURL;
-    if (photoFile) {
+    if (file) {
       // Upload nova foto para Supabase Storage
-      photoURL = await uploadToSupabase(photoFile, currentUser.uid);
+      photoURL = await uploadToSupabase(file, currentUser.uid);
     }
     // Atualizar dados no Firestore
     await updateDoc(doc(db, `artifacts/${appId}/public/data/catches`, editingCatchId), {
@@ -1008,13 +1014,12 @@ function updateKingOfMonth(catches) {
 
 async function uploadToSupabase(file, userId) {
   const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}_${Date.now()}.${file.type.split('/')[1]}`;
-  const filePath = `${fileName}`;
-  const { data, error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, file, {
-    cacheControl: '3600',
-    upsert: false
-  });
-  if (error) throw error;
+  const filePath = `capturas/${userId}_${Date.now()}.${fileExt}`;
+  const { data, error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, file);
+  if (error) {
+    console.error('Erro detalhado:', error);
+    alert(JSON.stringify(error));
+  }
   // Gerar URL pública
   const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
   return publicUrlData.publicUrl;
@@ -1056,10 +1061,13 @@ editProfileForm.addEventListener('submit', async (e) => {
     return;
   }
   try {
-    const photoFile = editProfilePhotoInput.files[0];
+    const file = editProfilePhotoInput.files[0];
+    console.log('Arquivo:', file);
+    console.log('Tipo:', typeof file);
+    console.log('Nome:', file.name);
     let photoURL = '';
-    if (photoFile) {
-      photoURL = await uploadToSupabase(photoFile, currentUser.uid);
+    if (file) {
+      photoURL = await uploadToSupabase(file, currentUser.uid);
     } else {
       photoURL = editAvatar.value;
     }
