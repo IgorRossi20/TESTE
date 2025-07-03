@@ -53,7 +53,7 @@ const toRegisterLink = document.getElementById('to-register');
 const toLoginLink = document.getElementById('to-login');
 
 // --- SUPABASE STORAGE INTEGRAÇÃO ---
-const SUPABASE_URL = 'https://swpmqihrmqxeriwmfein.supabase.co/';
+const SUPABASE_URL = 'https://swpmqihrmqxeriwmfein.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3cG1xaWhybXF4ZXJpd21mZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MDcwMjcsImV4cCI6MjA2NzA4MzAyN30.6s75ykNzZIM9-ZWu6ySAIwZ6jRntRfnsIx5XC0865Pc';
 const SUPABASE_BUCKET = 'capturas';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1008,9 +1008,12 @@ function updateKingOfMonth(catches) {
 
 async function uploadToSupabase(file, userId) {
   const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}_${Date.now()}.${fileExt}`;
+  const fileName = `${userId}_${Date.now()}.${file.type.split('/')[1]}`;
   const filePath = `${fileName}`;
-  const { data, error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, file, { upsert: false });
+  const { data, error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: false
+  });
   if (error) throw error;
   // Gerar URL pública
   const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
