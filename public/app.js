@@ -933,13 +933,13 @@ const kingPoints = document.getElementById('king-points');
 
 function showKingOfMonth(user, points) {
   if (!user) {
-    kingOfMonthDiv.classList.add('hidden');
+    kingOfMonthDiv.style.display = 'none';
     return;
   }
   kingPhoto.src = user.photoURL || '';
   kingName.textContent = user.nickname || '';
   kingPoints.textContent = `${points.toFixed(0)} pontos no mês`;
-  kingOfMonthDiv.classList.remove('hidden');
+  kingOfMonthDiv.style.display = '';
 }
 
 function updateKingOfMonth(catches) {

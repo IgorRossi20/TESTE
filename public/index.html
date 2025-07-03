@@ -83,13 +83,25 @@
                 <div id="ranking-list" class="space-y-3"></div>
             </div>
             <div class="lg:col-span-2 space-y-6">
+                <div id="king-of-month" class="max-w-lg mx-auto mb-4 mt-2">
+                    <div class="flex flex-col items-center justify-center bg-gradient-to-r from-yellow-200 via-yellow-100 to-yellow-50 border-4 border-yellow-400 rounded-2xl shadow-xl p-6 relative">
+                        <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-white rounded-full p-2 shadow-lg border-4 border-yellow-400">
+                            <i class="fas fa-trophy text-4xl text-yellow-500"></i>
+                        </div>
+                        <img id="king-photo" src="" alt="Rei do Lago" class="w-24 h-24 rounded-full border-4 border-yellow-400 object-cover mt-8 mb-2 shadow-md">
+                        <span class="text-2xl font-extrabold text-yellow-700 flex items-center gap-2 mb-1">Rei do Lago do Mês</span>
+                        <p id="king-name" class="text-lg font-bold text-gray-800 mb-1"></p>
+                        <p id="king-points" class="text-base text-gray-700"></p>
+                    </div>
+                </div>
+                <div id="king-of-month-anchor"></div>
                 <div class="bg-white p-4 rounded-xl shadow-lg text-center">
                     <button id="add-catch-btn" class="w-full md:w-auto bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 text-lg">
                         <i class="fas fa-plus-circle mr-2"></i> Registrar Nova Captura
                     </button>
                 </div>
                 <div>
-                    <h2 class="text-3xl font-bangers text-gray-800 mb-4 tracking-wider"><i class="fas fa-newspaper text-blue-500"></i> Mural da Zoeira</h2>
+                    <h2 class="text-3xl font-bangers text-gray-800 mb-4 tracking-wider"><i class="fas fa-newspaper text-blue-500"></i> Feed</h2>
                     <div id="feed-container" class="space-y-6"></div>
                 </div>
             </div>
@@ -221,14 +233,18 @@
           <div>
             <label class="block text-gray-700 font-bold mb-2">Escolha seu avatar:</label>
             <div id="avatar-options" class="grid grid-cols-4 gap-4 justify-center">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Man1" alt="Avatar Masculino 1" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Man1" title="Avatar Masculino 1">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Woman1" alt="Avatar Feminino 1" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Woman1" title="Avatar Feminino 1">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Strong" alt="Avatar Fortão" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Strong" title="Avatar Fortão">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Chubby" alt="Avatar Gordinho" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Chubby" title="Avatar Gordinho">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=LGBT" alt="Avatar LGBT" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=LGBT" title="Avatar LGBT">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Old" alt="Avatar Idoso" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Old" title="Avatar Idoso">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Kid" alt="Avatar Criança" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Kid" title="Avatar Criança">
-              <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Funny" alt="Avatar Engraçado" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Funny" title="Avatar Engraçado">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar1" alt="Avatar 1" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar1" title="Avatar 1">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar2" alt="Avatar 2" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar2" title="Avatar 2">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar3" alt="Avatar 3" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar3" title="Avatar 3">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar4" alt="Avatar 4" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar4" title="Avatar 4">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar5" alt="Avatar 5" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar5" title="Avatar 5">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar6" alt="Avatar 6" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar6" title="Avatar 6">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar7" alt="Avatar 7" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar7" title="Avatar 7">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar8" alt="Avatar 8" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar8" title="Avatar 8">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar9" alt="Avatar 9" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar9" title="Avatar 9">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar10" alt="Avatar 10" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar10" title="Avatar 10">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar11" alt="Avatar 11" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar11" title="Avatar 11">
+              <img src="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar12" alt="Avatar 12" class="avatar-option w-16 h-16 rounded-full border-4 border-transparent cursor-pointer" data-avatar="https://api.dicebear.com/7.x/croodles/svg?seed=Avatar12" title="Avatar 12">
             </div>
             <input type="hidden" id="register-avatar" name="avatar" required>
             <p id="avatar-error" class="text-red-500 text-sm mt-2 text-center"></p>
@@ -333,20 +349,6 @@
           </table>
         </div>
         <p id="report-empty" class="text-gray-500 text-center mt-4 hidden">Nenhum lançamento encontrado.</p>
-      </div>
-    </div>
-    <!-- Destaque Rei do Lago do Mês -->
-    <div id="king-of-month" class="max-w-xl mx-auto mt-4 mb-2 hidden">
-      <div class="flex items-center bg-yellow-100 border-2 border-yellow-400 rounded-xl shadow-lg p-4 gap-4">
-        <img id="king-photo" src="" alt="Rei do Lago" class="w-20 h-20 rounded-full border-4 border-yellow-400 object-cover">
-        <div>
-          <div class="flex items-center gap-2 mb-1">
-            <i class="fas fa-crown text-yellow-500 text-2xl"></i>
-            <span class="text-xl font-extrabold text-yellow-700">Rei do Lago do Mês</span>
-          </div>
-          <p id="king-name" class="text-lg font-bold text-gray-800"></p>
-          <p id="king-points" class="text-sm text-gray-600"></p>
-        </div>
       </div>
     </div>
     <script type="module" src="firebaseConfig.js"></script>
