@@ -53,7 +53,7 @@ const toRegisterLink = document.getElementById('to-register');
 const toLoginLink = document.getElementById('to-login');
 
 // --- SUPABASE STORAGE INTEGRAÇÃO ---
-const SUPABASE_URL = 'https://swmpqihrmqxeriwmfein.supabase.co';
+const SUPABASE_URL = 'https://swpmqihrmqxeriwmfein.supabase.co/';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3cG1xaWhybXF4ZXJpd21mZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MDcwMjcsImV4cCI6MjA2NzA4MzAyN30.6s75ykNzZIM9-ZWu6ySAIwZ6jRntRfnsIx5XC0865Pc';
 const SUPABASE_BUCKET = 'capturas';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -298,9 +298,9 @@ catchForm.addEventListener('submit', async (e) => {
         addCatchModal.style.display = 'none';
         catchForm.reset();
         fileNameDisplay.textContent = '';
-    } catch (error) {
-         console.error("Error adding catch:", error);
-         catchError.textContent = "Erro ao registrar a captura. Tente de novo.";
+    } catch (err) {
+        console.error("Erro detalhado:", err);
+        catchError.textContent = "Erro ao registrar a captura. Tente de novo.";
     } finally {
         submitCatchBtn.disabled = false;
         submitCatchBtn.innerHTML = 'Salvar Captura';
@@ -776,7 +776,8 @@ editProfileForm.addEventListener('submit', async (e) => {
     editProfileModal.style.display = 'none';
     setupListeners();
   } catch (err) {
-    editProfileError.textContent = 'Erro ao salvar perfil. Tente novamente.';
+    console.error("Erro detalhado:", err);
+    editProfileError.textContent = "Erro ao salvar perfil. Tente novamente.";
   }
 });
 
@@ -1079,7 +1080,8 @@ editProfileForm.addEventListener('submit', async (e) => {
     editProfileModal.style.display = 'none';
     setupListeners();
   } catch (err) {
-    editProfileError.textContent = 'Erro ao salvar perfil. Tente novamente.';
+    console.error("Erro detalhado:", err);
+    editProfileError.textContent = "Erro ao salvar perfil. Tente novamente.";
   }
 });
 
