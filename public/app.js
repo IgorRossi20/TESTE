@@ -293,6 +293,7 @@ function setupListeners() {
 
 // --- UI Update Logic ---
 function updateUI(catches) {
+    updateKingOfMonth(catches);
     updateRanking(catches);
     updateFeed(catches);
 }
@@ -922,4 +923,49 @@ onAuthStateChanged(auth, async (user) => {
     hideReportBtn();
     // ...restante do código...
   }
-}); 
+});
+
+// Rei do Lago do Mês
+const kingOfMonthDiv = document.getElementById('king-of-month');
+const kingPhoto = document.getElementById('king-photo');
+const kingName = document.getElementById('king-name');
+const kingPoints = document.getElementById('king-points');
+
+function showKingOfMonth(user, points) {
+  if (!user) {
+    kingOfMonthDiv.classList.add('hidden');
+    return;
+  }
+  kingPhoto.src = user.photoURL || '';
+  kingName.textContent = user.nickname || '';
+  kingPoints.textContent = `${points.toFixed(0)} pontos no mês`;
+  kingOfMonthDiv.classList.remove('hidden');
+}
+
+function updateKingOfMonth(catches) {
+  // Filtrar capturas do mês atual
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const monthCatches = catches.filter(c => {
+    if (!c.timestamp || !c.timestamp.toDate) return false;
+    const d = c.timestamp.toDate();
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+  // Somar pontos por usuário
+  const stats = {};
+  monthCatches.forEach(c => {
+    if (!stats[c.userId]) stats[c.userId] = { points: 0, user: { nickname: c.userNickname, photoURL: c.userPhotoURL } };
+    stats[c.userId].points += calculatePoints(c);
+  });
+  // Encontrar o maior
+  let king = null;
+  let maxPoints = 0;
+  Object.entries(stats).forEach(([uid, data]) => {
+    if (data.points > maxPoints) {
+      king = data.user;
+      maxPoints = data.points;
+    }
+  });
+  showKingOfMonth(king, maxPoints);
+} 
