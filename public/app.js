@@ -3,6 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, arrayUnion, setDoc, doc as firestoreDoc, getDocs, writeBatch, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // --- App Initialization ---
 let app, auth, db, storage;
@@ -50,6 +51,12 @@ const showLoginBtn = document.getElementById('show-login');
 const showRegisterBtn = document.getElementById('show-register');
 const toRegisterLink = document.getElementById('to-register');
 const toLoginLink = document.getElementById('to-login');
+
+// --- SUPABASE STORAGE INTEGRAÇÃO ---
+const SUPABASE_URL = 'https://swmpqihrmqxeriwmfein.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3cG1xaWhybXF4ZXJpd21mZWluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MDcwMjcsImV4cCI6MjA2NzA4MzAyN30.6s75ykNzZIM9-ZWu6ySAIwZ6jRntRfnsIx5XC0865Pc';
+const SUPABASE_BUCKET = 'capturas';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showAuthModal() {
   authModal.style.display = 'flex';
@@ -148,6 +155,26 @@ if (forgotPasswordLink) {
   });
 }
 
+// --- Cadastro: preview e upload de foto de perfil ---
+const registerPhotoInput = document.getElementById('register-photo-input');
+const registerPhotoName = document.getElementById('register-photo-name');
+const registerPhotoPreview = document.getElementById('register-photo-preview');
+registerPhotoInput.addEventListener('change', () => {
+  if (registerPhotoInput.files.length > 0) {
+    registerPhotoName.textContent = registerPhotoInput.files[0].name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      registerPhotoPreview.src = e.target.result;
+      registerPhotoPreview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(registerPhotoInput.files[0]);
+  } else {
+    registerPhotoName.textContent = '';
+    registerPhotoPreview.src = '';
+    registerPhotoPreview.classList.add('hidden');
+  }
+});
+
 registerForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   registerError.textContent = '';
@@ -166,6 +193,13 @@ registerForm.addEventListener('submit', async (e) => {
   }
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const photoFile = registerPhotoInput.files[0];
+    let photoURL = '';
+    if (photoFile) {
+      photoURL = await uploadToSupabase(photoFile, Date.now()); // usar timestamp já que userId ainda não existe
+    } else {
+      photoURL = registerAvatar.value;
+    }
     await setDoc(firestoreDoc(db, 'users', userCredential.user.uid), {
       nickname,
       photoURL,
@@ -246,11 +280,8 @@ catchForm.addEventListener('submit', async (e) => {
     try {
         let photoURL = '';
         if (photoFile) {
-            // 1. Upload image to Firebase Storage
-            const filePath = `catches/${currentUser.uid}/${Date.now()}-${photoFile.name}`;
-            const storageRef = ref(storage, filePath);
-            const snapshot = await uploadBytes(storageRef, photoFile);
-            photoURL = await getDownloadURL(snapshot.ref);
+            // Upload para Supabase Storage
+            photoURL = await uploadToSupabase(photoFile, currentUser.uid);
         }
         // 2. Add catch data to Firestore
         await addDoc(collection(db, `artifacts/${appId}/public/data/catches`), {
@@ -718,6 +749,13 @@ editProfileForm.addEventListener('submit', async (e) => {
     return;
   }
   try {
+    const photoFile = editProfilePhotoInput.files[0];
+    let photoURL = '';
+    if (photoFile) {
+      photoURL = await uploadToSupabase(photoFile, currentUser.uid);
+    } else {
+      photoURL = editAvatar.value;
+    }
     await setDoc(firestoreDoc(db, 'users', currentUser.uid), {
       nickname,
       photoURL
@@ -806,11 +844,8 @@ editCatchForm.addEventListener('submit', async (e) => {
   try {
     let photoURL = editingPhotoURL;
     if (photoFile) {
-      // Upload nova foto
-      const filePath = `catches/${currentUser.uid}/${Date.now()}-${photoFile.name}`;
-      const storageRef = ref(storage, filePath);
-      const snapshot = await uploadBytes(storageRef, photoFile);
-      photoURL = await getDownloadURL(snapshot.ref);
+      // Upload nova foto para Supabase Storage
+      photoURL = await uploadToSupabase(photoFile, currentUser.uid);
     }
     // Atualizar dados no Firestore
     await updateDoc(doc(db, `artifacts/${appId}/public/data/catches`, editingCatchId), {
@@ -968,4 +1003,93 @@ function updateKingOfMonth(catches) {
     }
   });
   showKingOfMonth(king, maxPoints);
-} 
+}
+
+async function uploadToSupabase(file, userId) {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}_${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+  const { data, error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, file, { upsert: false });
+  if (error) throw error;
+  // Gerar URL pública
+  const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+  return publicUrlData.publicUrl;
+}
+
+// --- Edição de perfil: preview e upload de foto ---
+const editProfilePhotoInput = document.getElementById('edit-profile-photo-input');
+const editProfilePhotoName = document.getElementById('edit-profile-photo-name');
+const editProfilePhotoPreview = document.getElementById('edit-profile-photo-preview');
+editProfilePhotoInput.addEventListener('change', () => {
+  if (editProfilePhotoInput.files.length > 0) {
+    editProfilePhotoName.textContent = editProfilePhotoInput.files[0].name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      editProfilePhotoPreview.src = e.target.result;
+      editProfilePhotoPreview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(editProfilePhotoInput.files[0]);
+  } else {
+    editProfilePhotoName.textContent = '';
+    editProfilePhotoPreview.src = '';
+    editProfilePhotoPreview.classList.add('hidden');
+  }
+});
+
+// --- Edição de perfil: salvar foto OU avatar ---
+editProfileForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  editProfileError.textContent = '';
+  editAvatarError.textContent = '';
+  const nickname = editNickname.value.trim();
+  const photoURL = editAvatar.value;
+  if (!nickname) {
+    editProfileError.textContent = 'O nome de guerra é obrigatório!';
+    return;
+  }
+  if (!photoURL) {
+    editAvatarError.textContent = 'Escolha um avatar!';
+    return;
+  }
+  try {
+    const photoFile = editProfilePhotoInput.files[0];
+    let photoURL = '';
+    if (photoFile) {
+      photoURL = await uploadToSupabase(photoFile, currentUser.uid);
+    } else {
+      photoURL = editAvatar.value;
+    }
+    await setDoc(firestoreDoc(db, 'users', currentUser.uid), {
+      nickname,
+      photoURL
+    }, { merge: true });
+    currentUser.nickname = nickname;
+    currentUser.photoURL = photoURL;
+    // Atualizar todas as capturas do usuário
+    const catchesQuery = query(collection(db, `artifacts/${appId}/public/data/catches`), where('userId', '==', currentUser.uid));
+    const snapshot = await getDocs(catchesQuery);
+    const batch = writeBatch(db);
+    snapshot.forEach(docSnap => {
+      batch.update(docSnap.ref, {
+        userNickname: nickname,
+        userPhotoURL: photoURL
+      });
+    });
+    await batch.commit();
+    editProfileModal.style.display = 'none';
+    setupListeners();
+  } catch (err) {
+    editProfileError.textContent = 'Erro ao salvar perfil. Tente novamente.';
+  }
+});
+
+// Mostrar botão de perfil quando logado
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    showProfileBtn();
+    // ...restante do código...
+  } else {
+    hideProfileBtn();
+    // ...restante do código...
+  }
+}); 

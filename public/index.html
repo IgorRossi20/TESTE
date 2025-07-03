@@ -249,6 +249,15 @@
             <input type="hidden" id="register-avatar" name="avatar" required>
             <p id="avatar-error" class="text-red-500 text-sm mt-2 text-center"></p>
           </div>
+          <div class="mt-4">
+            <label class="block text-gray-700 font-bold mb-2">Ou envie sua foto:</label>
+            <label for="register-photo-input" class="w-full cursor-pointer bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg inline-block text-center hover:bg-gray-300 transition-colors">
+              <i class="fas fa-camera"></i> Tirar / Escolher Foto
+            </label>
+            <input type="file" id="register-photo-input" name="photo" accept="image/*" capture="environment" class="hidden">
+            <p id="register-photo-name" class="text-sm text-gray-500 mt-2"></p>
+            <img id="register-photo-preview" src="" alt="Prévia da foto" class="w-20 h-20 object-cover rounded-full mt-2 border-2 border-gray-300 hidden">
+          </div>
           <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-transform">Cadastrar</button>
           <p id="register-error" class="text-red-500 text-sm mt-2 text-center"></p>
           <p class="text-center text-sm">Já tem conta? <a href="#" id="to-login" class="text-blue-700 underline">Entrar</a></p>
@@ -275,6 +284,15 @@
             </div>
             <input type="hidden" id="edit-avatar" name="avatar" required>
             <p id="edit-avatar-error" class="text-red-500 text-sm mt-2 text-center"></p>
+          </div>
+          <div class="mt-4">
+            <label class="block text-gray-700 font-bold mb-2">Ou envie sua foto:</label>
+            <label for="edit-profile-photo-input" class="w-full cursor-pointer bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg inline-block text-center hover:bg-gray-300 transition-colors">
+              <i class="fas fa-camera"></i> Tirar / Escolher Foto
+            </label>
+            <input type="file" id="edit-profile-photo-input" name="photo" accept="image/*" capture="environment" class="hidden">
+            <p id="edit-profile-photo-name" class="text-sm text-gray-500 mt-2"></p>
+            <img id="edit-profile-photo-preview" src="" alt="Prévia da foto" class="w-20 h-20 object-cover rounded-full mt-2 border-2 border-gray-300 hidden">
           </div>
           <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-transform">Salvar</button>
           <p id="edit-profile-error" class="text-red-500 text-sm mt-2 text-center"></p>
