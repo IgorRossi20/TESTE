@@ -199,6 +199,7 @@ registerForm.addEventListener('submit', async (e) => {
     console.log('Nome:', file.name);
     let photoURL = '';
     if (file) {
+      console.log('Usuário autenticado:', supabase.auth.getUser());
       photoURL = await uploadToSupabase(file, Date.now()); // usar timestamp já que userId ainda não existe
     } else {
       photoURL = registerAvatar.value;
@@ -284,6 +285,7 @@ catchForm.addEventListener('submit', async (e) => {
         let photoURL = '';
         if (file) {
             // Upload para Supabase Storage
+            console.log('Usuário autenticado:', supabase.auth.getUser());
             photoURL = await uploadToSupabase(file, currentUser.uid);
         }
         // 2. Add catch data to Firestore
@@ -758,6 +760,7 @@ editProfileForm.addEventListener('submit', async (e) => {
     console.log('Nome:', file.name);
     let photoURL = '';
     if (file) {
+      console.log('Usuário autenticado:', supabase.auth.getUser());
       photoURL = await uploadToSupabase(file, currentUser.uid);
     } else {
       photoURL = editAvatar.value;
@@ -852,6 +855,7 @@ editCatchForm.addEventListener('submit', async (e) => {
     let photoURL = editingPhotoURL;
     if (file) {
       // Upload nova foto para Supabase Storage
+      console.log('Usuário autenticado:', supabase.auth.getUser());
       photoURL = await uploadToSupabase(file, currentUser.uid);
     }
     // Atualizar dados no Firestore
@@ -1067,6 +1071,7 @@ editProfileForm.addEventListener('submit', async (e) => {
     console.log('Nome:', file.name);
     let photoURL = '';
     if (file) {
+      console.log('Usuário autenticado:', supabase.auth.getUser());
       photoURL = await uploadToSupabase(file, currentUser.uid);
     } else {
       photoURL = editAvatar.value;
