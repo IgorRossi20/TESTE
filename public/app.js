@@ -841,4 +841,17 @@ onAuthStateChanged(auth, async (user) => {
 function excluirCaptura() {
   // Implemente a lógica para excluir a captura
   console.log('Excluindo captura...');
+}
+
+async function uploadToSupabase(file, userId) {
+  const fileExt = file.name.split('.').pop();
+  const filePath = `capturas/${userId}_${Date.now()}.${fileExt}`;
+  const { data, error } = await supabase.storage.from(SUPABASE_BUCKET).upload(filePath, file);
+  if (error) {
+    console.error('Erro detalhado:', error);
+    throw error;
+  }
+  // Gerar URL pública
+  const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+  return publicUrlData.publicUrl;
 } 
