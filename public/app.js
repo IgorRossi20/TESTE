@@ -357,6 +357,22 @@ function getUserBadges(userStats) {
     return [];
 }
 
+function showKingOfMonth(user, points) {
+  const kingOfMonthDiv = document.getElementById('king-of-month');
+  const kingPhoto = document.getElementById('king-photo');
+  const kingName = document.getElementById('king-name');
+  const kingPoints = document.getElementById('king-points');
+
+  if (!user) {
+    kingOfMonthDiv.style.display = 'none';
+    return;
+  }
+  kingPhoto.src = user.photoURL || '';
+  kingName.textContent = user.nickname || '';
+  kingPoints.textContent = `${points.toFixed(0)} pontos no mês`;
+  kingOfMonthDiv.style.display = '';
+}
+
 function updateKingOfMonth(catches) {
   // Filtrar capturas do mês atual
   const now = new Date();
