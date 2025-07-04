@@ -357,6 +357,34 @@ function getUserBadges(userStats) {
     return [];
 }
 
+function updateKingOfMonth(catches) {
+  // Filtrar capturas do mês atual
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const monthCatches = catches.filter(c => {
+    if (!c.timestamp || !c.timestamp.toDate) return false;
+    const d = c.timestamp.toDate();
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+  // Somar pontos por usuário
+  const stats = {};
+  monthCatches.forEach(c => {
+    if (!stats[c.userId]) stats[c.userId] = { points: 0, user: { nickname: c.userNickname, photoURL: c.userPhotoURL } };
+    stats[c.userId].points += calculatePoints(c);
+  });
+  // Encontrar o maior
+  let king = null;
+  let maxPoints = 0;
+  Object.entries(stats).forEach(([uid, data]) => {
+    if (data.points > maxPoints) {
+      king = data.user;
+      maxPoints = data.points;
+    }
+  });
+  showKingOfMonth(king, maxPoints);
+}
+
 function updateRanking(catches) {
     const statsMap = {};
     catches.forEach(c => {
