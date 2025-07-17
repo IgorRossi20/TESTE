@@ -85,12 +85,14 @@ onAuthStateChanged(auth, async (user) => {
       currentUser.nickname = '';
       currentUser.photoURL = '';
     }
+    showProfileBtn(); // garantir que o botão de perfil aparece
     hideAuthModal();
     showLogoutBtn();
     setupListeners();
     mainContent.classList.remove('invisible');
   } else {
     currentUser = { uid: null, nickname: null, photoURL: null, email: null };
+    hideProfileBtn(); // garantir que o botão de perfil some
     showAuthModal();
     hideLogoutBtn();
     loadingSpinner.style.display = 'none';
