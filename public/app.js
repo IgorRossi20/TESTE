@@ -750,7 +750,7 @@ editCatchForm.addEventListener('submit', async (e) => {
     });
     document.getElementById('edit-catch-modal').style.display = 'none';
     editCatchForm.reset();
-    editFileNameDisplay.textContent = '';
+    fileNameDisplay.textContent = '';
     setupListeners();
   } catch (err) {
     console.error('Erro ao editar captura:', err);
@@ -820,6 +820,34 @@ function showProfileModal(user) {
       </div>
     </div>
   `;
+  // Histórico de lançamentos visual
+  let historyHTML = '';
+  if (user.catches && user.catches.length > 0) {
+    historyHTML = `<div class='mt-4'><h3 class='text-base font-bold mb-2'>Histórico de Lançamentos:</h3><div class='space-y-3'>`;
+    // Ordenar do mais recente para o mais antigo
+    const sortedCatches = [...user.catches].sort((a, b) => (b.timestamp?.toDate?.() || 0) - (a.timestamp?.toDate?.() || 0));
+    sortedCatches.forEach(c => {
+      let dateStr = '-';
+      if (c.timestamp && c.timestamp.toDate) {
+        const d = c.timestamp.toDate();
+        dateStr = d.toLocaleDateString('pt-BR');
+      }
+      const pts = calculatePoints(c).toFixed(2);
+      historyHTML += `
+        <div class='flex items-center gap-3 bg-gray-50 rounded-lg p-2 shadow-sm border border-gray-200'>
+          <img src='${c.photoURL || 'https://placehold.co/60x60/CCCCCC/FFFFFF?text=Sem+Foto'}' alt='Foto' class='w-14 h-14 object-cover rounded-lg border border-gray-300'>
+          <div class='flex-1'>
+            <div class='font-bold text-sm text-gray-800 mb-1'>${c.species}</div>
+            <div class='text-xs text-gray-600'>${dateStr} | <b>${c.weight} kg</b> | <span class='text-yellow-700 font-bold'>${pts} pts</span></div>
+          </div>
+        </div>
+      `;
+    });
+    historyHTML += '</div></div>';
+  } else {
+    historyHTML = `<div class='mt-4 text-xs text-gray-500'>Nenhum lançamento registrado.</div>`;
+  }
+  infoDiv.innerHTML += historyHTML;
   // Insígnias conquistadas
   const conquered = getUserBadges(user).map(b => b.name);
   badgesDiv.innerHTML = BADGES.map(b => `
@@ -885,34 +913,25 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-const profileBtn = document.getElementById('profile-btn');
-const editProfileModal = document.getElementById('edit-profile-modal');
-const editProfileForm = document.getElementById('edit-profile-form');
-const editNickname = document.getElementById('edit-nickname');
-const editAvatarOptions = document.querySelectorAll('.edit-avatar-option');
-const editAvatar = document.getElementById('edit-avatar');
-const editAvatarError = document.getElementById('edit-avatar-error');
-const editProfileError = document.getElementById('edit-profile-error');
+// --- EDIÇÃO DE PERFIL: avatar e foto igual ao cadastro ---
+const editProfilePhotoInput = document.getElementById('edit-profile-photo-input');
+const editProfilePhotoName = document.getElementById('edit-profile-photo-name');
+const editProfilePhotoPreview = document.getElementById('edit-profile-photo-preview');
 
-function showProfileBtn() {
-  profileBtn.classList.remove('hidden');
-}
-function hideProfileBtn() {
-  profileBtn.classList.add('hidden');
-}
-
-profileBtn.addEventListener('click', () => {
-  // Preencher campos com dados atuais
-  editNickname.value = currentUser.nickname || '';
-  editAvatar.value = currentUser.photoURL || '';
-  editAvatarOptions.forEach(o => {
-    if (o.getAttribute('data-avatar') === currentUser.photoURL) {
-      o.classList.add('border-blue-500');
-    } else {
-      o.classList.remove('border-blue-500');
-    }
-  });
-  editProfileModal.style.display = 'flex';
+editProfilePhotoInput.addEventListener('change', () => {
+  if (editProfilePhotoInput.files.length > 0) {
+    editProfilePhotoName.textContent = editProfilePhotoInput.files[0].name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      editProfilePhotoPreview.src = e.target.result;
+      editProfilePhotoPreview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(editProfilePhotoInput.files[0]);
+  } else {
+    editProfilePhotoName.textContent = '';
+    editProfilePhotoPreview.src = '';
+    editProfilePhotoPreview.classList.add('hidden');
+  }
 });
 
 editAvatarOptions.forEach(option => {
@@ -921,15 +940,12 @@ editAvatarOptions.forEach(option => {
     option.classList.add('border-blue-500');
     editAvatar.value = option.getAttribute('data-avatar');
     editAvatarError.textContent = '';
+    // Limpar preview de foto se escolher avatar
+    editProfilePhotoInput.value = '';
+    editProfilePhotoName.textContent = '';
+    editProfilePhotoPreview.src = '';
+    editProfilePhotoPreview.classList.add('hidden');
   });
-});
-
-document.addEventListener('click', (e) => {
-  if (e.target === editProfileModal) {
-    editProfileModal.style.display = 'none';
-    editProfileError.textContent = '';
-    editAvatarError.textContent = '';
-  }
 });
 
 editProfileForm.addEventListener('submit', async (e) => {
@@ -937,26 +953,20 @@ editProfileForm.addEventListener('submit', async (e) => {
   editProfileError.textContent = '';
   editAvatarError.textContent = '';
   const nickname = editNickname.value.trim();
-  const photoURL = editAvatar.value;
+  let photoURL = editAvatar.value;
   if (!nickname) {
     editProfileError.textContent = 'O nome de guerra é obrigatório!';
     return;
   }
-  if (!photoURL) {
-    editAvatarError.textContent = 'Escolha um avatar!';
+  // Se não tem avatar nem foto
+  if (!photoURL && !editProfilePhotoInput.files[0]) {
+    editAvatarError.textContent = 'Escolha um avatar ou envie uma foto!';
     return;
   }
   try {
     const file = editProfilePhotoInput.files[0];
-    console.log('Arquivo:', file);
-    console.log('Tipo:', typeof file);
-    console.log('Nome:', file.name);
-    let photoURL = '';
     if (file) {
-      console.log('Usuário autenticado:', supabase.auth.getUser());
       photoURL = await uploadToSupabase(file, currentUser.uid);
-    } else {
-      photoURL = editAvatar.value;
     }
     await setDoc(firestoreDoc(db, 'users', currentUser.uid), {
       nickname,
@@ -976,10 +986,22 @@ editProfileForm.addEventListener('submit', async (e) => {
     });
     await batch.commit();
     editProfileModal.style.display = 'none';
+    editProfileForm.reset();
+    editProfilePhotoName.textContent = '';
+    editProfilePhotoPreview.src = '';
+    editProfilePhotoPreview.classList.add('hidden');
+    editAvatarOptions.forEach(o => o.classList.remove('border-blue-500'));
     setupListeners();
   } catch (err) {
-    console.error("Erro detalhado:", err);
-    editProfileError.textContent = "Erro ao salvar perfil. Tente novamente.";
+    if (err.code === 'auth/invalid-email') {
+      editProfileError.textContent = 'E-mail inválido. Verifique o endereço digitado.';
+    } else if (err.code === 'auth/weak-password') {
+      editProfileError.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+    } else if (err.code === 'auth/network-request-failed') {
+      editProfileError.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
+    } else {
+      editProfileError.textContent = 'Erro ao salvar perfil. Tente novamente.';
+    }
   }
 });
 
