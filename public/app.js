@@ -653,7 +653,6 @@ async function handleDeleteCatch(e) {
         // Não falha se não conseguir excluir a foto
       }
     }
-    alert('Captura excluída com sucesso!');
     setupListeners();
   } catch (error) {
     console.error('Erro ao excluir captura:', error);
@@ -947,5 +946,6 @@ async function uploadToSupabase(file, userId) {
   }
   // Gerar URL pública
   const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filePath);
+  console.log('URL gerada:', publicUrlData.publicUrl);
   return publicUrlData.publicUrl;
 } 
