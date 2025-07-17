@@ -676,6 +676,7 @@ const editCatchError = document.getElementById('edit-catch-error');
 const submitEditCatchBtn = document.getElementById('submit-edit-catch-btn');
 let editingCatchId = null;
 let editingPhotoURL = '';
+const editCatchModal = document.getElementById('edit-catch-modal');
 
 editFishPhotoInput.addEventListener('change', () => {
   if (editFishPhotoInput.files.length > 0) {
