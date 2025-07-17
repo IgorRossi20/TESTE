@@ -413,12 +413,19 @@ function updateRanking(catches) {
             statsMap[c.userId] = {
                 uid: c.userId, nickname: c.userNickname, photoURL: c.userPhotoURL,
                 totalWeight: 0, catchCount: 0, totalPoints: 0, catches: [],
-                top1Streak: 0, lastStreak: 0, wasLastOnce: false, participatedEvent: false, rankTitle: ''
+                top1Streak: 0, lastStreak: 0, wasLastOnce: false, participatedEvent: false, rankTitle: '',
+                uniqueDays: new Set(), avgPointsPerDay: 0
             };
         }
         statsMap[c.userId].totalWeight += c.weight;
         statsMap[c.userId].catchCount++;
         statsMap[c.userId].catches.push(c);
+        // Adicionar o dia da captura ao Set de dias únicos
+        if (c.timestamp && c.timestamp.toDate) {
+            const d = c.timestamp.toDate();
+            const dayStr = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+            statsMap[c.userId].uniqueDays.add(dayStr);
+        }
     });
     let rankedUsers = Object.values(statsMap);
     rankedUsers.forEach(user => {
@@ -427,12 +434,15 @@ function updateRanking(catches) {
             points += calculatePoints(c);
         });
         user.totalPoints = points;
+        user.daysFished = user.uniqueDays.size;
+        user.avgPointsPerDay = user.daysFished > 0 ? (user.totalPoints / user.daysFished) : 0;
     });
     // Seleção de modo de ranking
     const mode = document.getElementById('ranking-mode')?.value || 'weight';
     if (mode === 'weight') rankedUsers.sort((a, b) => b.totalWeight - a.totalWeight);
     else if (mode === 'count') rankedUsers.sort((a, b) => b.catchCount - a.catchCount);
     else if (mode === 'points') rankedUsers.sort((a, b) => b.totalPoints - a.totalPoints);
+    else if (mode === 'avg-per-day') rankedUsers.sort((a, b) => b.avgPointsPerDay - a.avgPointsPerDay);
     rankingList.innerHTML = '';
     if (rankedUsers.length === 0) {
         rankingList.innerHTML = `<p class="text-gray-500 text-center">Ninguém pescou nada ainda. Seja o primeiro!</p>`;
@@ -467,14 +477,25 @@ function updateRanking(catches) {
         const badgesHTML = badges.map(b => `<span title="${b.name} (${b.rarity}) - ${b.desc}" class="text-xl mx-1">${b.icon}</span>`).join('');
         const userElement = document.createElement('div');
         userElement.className = `p-3 rounded-lg flex items-center space-x-3 transition-all ${rank === 1 ? 'bg-yellow-100 border-2 border-yellow-400' : rank === rankedUsers.length ? 'bg-pink-100 border-2 border-pink-300' : 'bg-gray-100'}`;
+        let extraInfo = '';
+        if (mode === 'avg-per-day') {
+          extraInfo = `<span class='block text-xs text-gray-600'>Dias pescados: ${user.daysFished} | Média: ${user.avgPointsPerDay.toFixed(2)} pts/dia</span>`;
+        } else if (mode === 'points') {
+          extraInfo = `<span class='block text-xs text-gray-600'>Total: ${user.totalPoints.toFixed(0)} pts</span>`;
+        } else if (mode === 'weight') {
+          extraInfo = `<span class='block text-xs text-gray-600'>Total: ${user.totalWeight.toFixed(2)} kg</span>`;
+        } else if (mode === 'count') {
+          extraInfo = `<span class='block text-xs text-gray-600'>Total: ${user.catchCount} peixes</span>`;
+        }
         userElement.innerHTML = `
             ${rankIcon}
             <img src="${user.photoURL}" alt="${user.nickname}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-300">
             <div class="flex-grow">
                 <p class="font-bold ${nameClass}">${user.nickname}</p>
                 <p class="text-sm text-gray-600">
-                    ${mode === 'weight' ? user.totalWeight.toFixed(2) + ' kg' : mode === 'count' ? user.catchCount + ' peixes' : user.totalPoints.toFixed(0) + ' pontos'}
+                    ${mode === 'weight' ? user.totalWeight.toFixed(2) + ' kg' : mode === 'count' ? user.catchCount + ' peixes' : mode === 'points' ? user.totalPoints.toFixed(0) + ' pontos' : user.avgPointsPerDay.toFixed(2) + ' pts/dia'}
                 </p>
+                ${extraInfo}
                 <div class="mt-1">${badgesHTML}</div>
                 <div class="text-xs font-bold mt-1">${title}</div>
             </div>`;
@@ -768,13 +789,34 @@ function showProfileModal(user) {
   const modal = document.getElementById('profile-modal');
   const infoDiv = document.getElementById('profile-info');
   const badgesDiv = document.getElementById('profile-badges');
+  // Calcular dias pescados e média por dia
+  let daysFished = 0;
+  let avgPointsPerDay = 0;
+  if (user.catches) {
+    const uniqueDays = new Set();
+    let totalPoints = 0;
+    user.catches.forEach(c => {
+      if (c.timestamp && c.timestamp.toDate) {
+        const d = c.timestamp.toDate();
+        const dayStr = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+        uniqueDays.add(dayStr);
+      }
+      totalPoints += calculatePoints(c);
+    });
+    daysFished = uniqueDays.size;
+    avgPointsPerDay = daysFished > 0 ? (totalPoints / daysFished) : 0;
+  } else if (user.daysFished !== undefined && user.avgPointsPerDay !== undefined) {
+    daysFished = user.daysFished;
+    avgPointsPerDay = user.avgPointsPerDay;
+  }
   infoDiv.innerHTML = `
     <div class="flex items-center gap-4 mb-4">
       <img src="${user.photoURL}" alt="${user.nickname}" class="w-16 h-16 rounded-full object-cover border-2 border-gray-300">
       <div>
         <p class="font-bold text-2xl text-gray-800 mb-1">${user.nickname}</p>
-        <p class="text-sm text-blue-700 font-bold">${user.rankTitle}</p>
-        <p class="text-sm text-gray-600">${user.totalWeight.toFixed(2)} kg | ${user.catchCount} peixes | ${user.totalPoints.toFixed(0)} pontos</p>
+        <p class="text-sm text-blue-700 font-bold">${user.rankTitle || ''}</p>
+        <p class="text-sm text-gray-600">${user.totalWeight?.toFixed(2) || 0} kg | ${user.catchCount || 0} peixes | ${user.totalPoints?.toFixed(0) || 0} pontos</p>
+        <p class="text-xs text-gray-600 mt-1">Dias pescados: <b>${daysFished}</b> | Média por dia: <b>${avgPointsPerDay.toFixed(2)} pts/dia</b></p>
       </div>
     </div>
   `;
