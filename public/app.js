@@ -194,12 +194,8 @@ registerForm.addEventListener('submit', async (e) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const file = registerPhotoInput.files[0];
-    console.log('Arquivo:', file);
-    console.log('Tipo:', typeof file);
-    console.log('Nome:', file.name);
     let photoURL = '';
     if (file) {
-      console.log('Usuário autenticado:', supabase.auth.getUser());
       photoURL = await uploadToSupabase(file, Date.now()); // usar timestamp já que userId ainda não existe
     } else {
       photoURL = registerAvatar.value;
@@ -213,8 +209,17 @@ registerForm.addEventListener('submit', async (e) => {
     avatarOptions.forEach(o => o.classList.remove('border-blue-500'));
     hideAuthModal();
   } catch (err) {
+    // Tratamento de erros do Firebase Auth
     if (err.code === 'auth/email-already-in-use') {
       registerError.textContent = 'Este e-mail já está cadastrado. Faça login ou use outro e-mail.';
+    } else if (err.code === 'auth/invalid-email') {
+      registerError.textContent = 'E-mail inválido. Verifique o endereço digitado.';
+    } else if (err.code === 'auth/weak-password') {
+      registerError.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+    } else if (err.code === 'auth/missing-password') {
+      registerError.textContent = 'Digite uma senha.';
+    } else if (err.code === 'auth/network-request-failed') {
+      registerError.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
     } else {
       registerError.textContent = 'Erro: ' + (err.message || 'Não foi possível cadastrar.');
     }
