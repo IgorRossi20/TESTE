@@ -951,6 +951,15 @@ editAvatarOptions.forEach(option => {
   });
 });
 
+const editProfileForm = document.getElementById('edit-profile-form');
+const profileBtn = document.getElementById('profile-btn');
+function showProfileBtn() {
+  profileBtn.classList.remove('hidden');
+}
+function hideProfileBtn() {
+  profileBtn.classList.add('hidden');
+}
+
 editProfileForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   editProfileError.textContent = '';
