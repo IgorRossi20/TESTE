@@ -936,6 +936,7 @@ editProfilePhotoInput.addEventListener('change', () => {
   }
 });
 
+const editAvatarOptions = document.querySelectorAll('.edit-avatar-option');
 editAvatarOptions.forEach(option => {
   option.addEventListener('click', () => {
     editAvatarOptions.forEach(o => o.classList.remove('border-blue-500'));
