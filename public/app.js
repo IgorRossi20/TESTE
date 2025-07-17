@@ -623,8 +623,107 @@ async function handleEditCatch(e) {
 
 async function handleDeleteCatch(e) {
   const catchId = e.currentTarget.dataset.catchId;
-  excluirCaptura();
+  // Buscar dados da captura
+  const catchDocRef = doc(db, `artifacts/${appId}/public/data/catches`, catchId);
+  const catchDoc = await getDoc(catchDocRef);
+  if (!catchDoc.exists()) return;
+  const c = catchDoc.data();
+  // Permissão: só dono ou admin
+  if (c.userId !== currentUser.uid && !isAdmin()) {
+    alert('Você não tem permissão para excluir esta captura.');
+    return;
+  }
+  // Confirmação
+  if (!confirm('Tem certeza que deseja excluir esta captura?')) {
+    return;
+  }
+  try {
+    // Excluir documento
+    await deleteDoc(catchDocRef);
+    // Se há foto, tentar excluir do storage (opcional)
+    if (c.photoURL && c.photoURL.includes('supabase')) {
+      try {
+        // Extrair caminho relativo do arquivo no Supabase
+        const urlParts = c.photoURL.split('/');
+        const fileName = urlParts[urlParts.length - 1].split('?')[0];
+        const filePath = `capturas/${fileName}`;
+        await supabase.storage.from(SUPABASE_BUCKET).remove([filePath]);
+      } catch (storageError) {
+        console.log('Erro ao excluir foto do storage:', storageError);
+        // Não falha se não conseguir excluir a foto
+      }
+    }
+    alert('Captura excluída com sucesso!');
+    setupListeners();
+  } catch (error) {
+    console.error('Erro ao excluir captura:', error);
+    alert('Erro ao excluir captura. Tente novamente.');
+  }
 }
+
+// --- EDIÇÃO DE CAPTURA ---
+const editCatchForm = document.getElementById('edit-catch-form');
+const editSpecies = document.getElementById('edit-species');
+const editWeight = document.getElementById('edit-weight');
+const editFishPhotoInput = document.getElementById('edit-fish-photo-input');
+const editCurrentPhoto = document.getElementById('edit-current-photo');
+const editFileNameDisplay = document.getElementById('edit-file-name');
+const editCatchError = document.getElementById('edit-catch-error');
+const submitEditCatchBtn = document.getElementById('submit-edit-catch-btn');
+let editingCatchId = null;
+let editingPhotoURL = '';
+
+editFishPhotoInput.addEventListener('change', () => {
+  if (editFishPhotoInput.files.length > 0) {
+    editFileNameDisplay.textContent = editFishPhotoInput.files[0].name;
+  } else {
+    editFileNameDisplay.textContent = '';
+  }
+});
+
+editCatchForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  editCatchError.textContent = '';
+  submitEditCatchBtn.disabled = true;
+  submitEditCatchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+  const species = editSpecies.value.trim();
+  const weight = parseFloat(editWeight.value);
+  const file = editFishPhotoInput.files[0];
+  if (!species || !weight) {
+    editCatchError.textContent = 'Espécie e peso são obrigatórios!';
+    submitEditCatchBtn.disabled = false;
+    submitEditCatchBtn.innerHTML = 'Salvar Alterações';
+    return;
+  }
+  if (weight <= 0) {
+    editCatchError.textContent = 'O peso deve ser maior que zero!';
+    submitEditCatchBtn.disabled = false;
+    submitEditCatchBtn.innerHTML = 'Salvar Alterações';
+    return;
+  }
+  try {
+    let photoURL = editingPhotoURL;
+    if (file) {
+      photoURL = await uploadToSupabase(file, currentUser.uid);
+    }
+    const catchDocRef = doc(db, `artifacts/${appId}/public/data/catches`, editingCatchId);
+    await updateDoc(catchDocRef, {
+      species,
+      weight,
+      photoURL
+    });
+    document.getElementById('edit-catch-modal').style.display = 'none';
+    editCatchForm.reset();
+    editFileNameDisplay.textContent = '';
+    setupListeners();
+  } catch (err) {
+    console.error('Erro ao editar captura:', err);
+    editCatchError.textContent = 'Erro ao salvar alterações. Tente novamente.';
+  } finally {
+    submitEditCatchBtn.disabled = false;
+    submitEditCatchBtn.innerHTML = 'Salvar Alterações';
+  }
+});
 
 // --- Utility Functions ---
 function formatTimeAgo(date) {
@@ -837,11 +936,6 @@ onAuthStateChanged(auth, async (user) => {
     // ...restante do código...
   }
 });
-
-function excluirCaptura() {
-  // Implemente a lógica para excluir a captura
-  console.log('Excluindo captura...');
-}
 
 async function uploadToSupabase(file, userId) {
   const fileExt = file.name.split('.').pop();
