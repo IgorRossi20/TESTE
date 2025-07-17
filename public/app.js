@@ -1021,7 +1021,22 @@ editProfileForm.addEventListener('submit', async (e) => {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     showProfileBtn();
-    // ...restante do código...
+    // Buscar dados do usuário atual para o modal
+    // O ideal é usar a função showProfileModal já existente
+    // Buscar as capturas do usuário atual para mostrar no perfil
+    const catchesQuery = query(collection(db, `artifacts/${appId}/public/data/catches`), where('userId', '==', currentUser.uid));
+    getDocs(catchesQuery).then(snapshot => {
+      const userCatches = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      showProfileModal({
+        nickname: currentUser.nickname,
+        photoURL: currentUser.photoURL,
+        totalWeight: userCatches.reduce((sum, c) => sum + (c.weight || 0), 0),
+        catchCount: userCatches.length,
+        totalPoints: userCatches.reduce((sum, c) => sum + calculatePoints(c), 0),
+        catches: userCatches
+      });
+      document.getElementById('profile-modal').style.display = 'flex';
+    });
   } else {
     hideProfileBtn();
     // ...restante do código...
