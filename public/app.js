@@ -678,6 +678,16 @@ let editingCatchId = null;
 let editingPhotoURL = '';
 const editCatchModal = document.getElementById('edit-catch-modal');
 
+const closeEditCatchModalBtn = document.getElementById('close-edit-catch-modal');
+if (closeEditCatchModalBtn) {
+  closeEditCatchModalBtn.onclick = () => {
+    editCatchModal.style.display = 'none';
+    editCatchForm.reset();
+    editFileNameDisplay.textContent = '';
+    editCatchError.textContent = '';
+  };
+}
+
 editFishPhotoInput.addEventListener('change', () => {
   if (editFishPhotoInput.files.length > 0) {
     editFileNameDisplay.textContent = editFishPhotoInput.files[0].name;
